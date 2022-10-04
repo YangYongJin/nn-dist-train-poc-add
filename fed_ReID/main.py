@@ -92,7 +92,6 @@ def train():
         args.project_dir, 
         args.model_name, 
         args.num_of_clients, 
-        args.lr, 
         args.drop_rate, 
         args.stride, 
         args.multiple_scale)

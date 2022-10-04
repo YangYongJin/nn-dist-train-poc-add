@@ -51,7 +51,7 @@ def aggregate_models(models, weights):
 
 
 class Server():
-    def __init__(self, clients, data, device, project_dir, model_name, num_of_clients, lr, drop_rate, stride, multiple_scale):
+    def __init__(self, clients, data, device, project_dir, model_name, num_of_clients, drop_rate, stride, multiple_scale):
         self.project_dir = project_dir
         self.data = data
         self.device = device
@@ -59,7 +59,6 @@ class Server():
         self.clients = clients
         self.client_list = self.data.client_list
         self.num_of_clients = num_of_clients
-        self.lr = lr
         self.multiple_scale = multiple_scale
         self.drop_rate = drop_rate
         self.stride = stride
