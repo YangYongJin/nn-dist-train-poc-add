@@ -26,8 +26,6 @@ class Client():
         self.classifier = self.full_model.classifier.classifier #model의 classifier 부분!!
         self.full_model.classifier.classifier = nn.Sequential() #empty!!
         self.model = self.full_model #self.full_model 중 feature extrator만 해당!!
-#         self.distance=0 #pure fedpav 기준 필요 없을 것 같음!! 
-#         self.optimization = Optimization(self.train_loader, self.device) #pure fedpav 기준 필요 없을 것 같음!! 
         self.tau=tau
         self.beta=beta
         
@@ -35,7 +33,6 @@ class Client():
     def train(self, federated_model, use_cuda, lr):        
         self.y_err = []
         self.y_loss = []
-#         self.model.load_state_dict(federated_model.state_dict())
         self.model.load_state_dict(federated_model) #feature-extractor part!!
 
         self.model.classifier.classifier = self.classifier #client model에서 feature-extractor, classifier 연결!!
@@ -93,18 +90,13 @@ class Client():
             self.y_loss.append(epoch_loss) #local epoch이 1이라 의미 없어진듯
             self.y_err.append(1.0-epoch_acc) #local epoch이 1이라 의미 없어진듯
 
-#             time_elapsed = time.time() - since #1-epoch 도는데 걸린 시간, epoch이 1이라 아래 것과 겹침!!
-#             print('Client', self.cid, ' Training complete in {:.0f}m {:.0f}s'.format(
-#                 time_elapsed // 60, time_elapsed % 60))
 
         time_elapsed = time.time() - since #local iteration 하는데 걸린 시간
         print('Client', self.cid, 'Training complete in {:.0f}m {:.0f}s'.format(
             time_elapsed // 60, time_elapsed % 60))
 
-        # save_network(self.model, self.cid, 'last', self.project_dir, self.model_name, gpu_ids) #원래부터 주석되어 있었음!!
         
         self.classifier = self.model.classifier.classifier
-#         self.distance = self.optimization.cdw_feature_distance(federated_model, self.old_classifier, self.model)#pure fedpav 기준 필요 없을 것 같음!! 
         self.model.classifier.classifier = nn.Sequential()
 
 
@@ -118,5 +110,3 @@ class Client():
     def get_train_loss(self):
         return self.y_loss[-1]
 
-#     def get_cos_distance_weight(self):#pure fedpav 기준 필요 없을 것 같음!! 
-#         return self.distance
