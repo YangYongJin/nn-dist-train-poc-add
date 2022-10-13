@@ -39,7 +39,6 @@ class Client():
         self.model.load_state_dict(federated_model) #feature-extractor part!!
 
         self.model.classifier.classifier = self.classifier #client model에서 feature-extractor, classifier 연결!!
-        self.old_classifier = copy.deepcopy(self.classifier) # 이전 라운드의 classifier는 따로 저장!!, cdw feature 계산하기 위함인데 필요 없을 것 같음!!
         self.model = self.model.to(self.device)
 
         optimizer = get_optimizer(self.model, lr)
