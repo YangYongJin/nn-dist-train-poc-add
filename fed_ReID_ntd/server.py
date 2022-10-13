@@ -62,18 +62,14 @@ class Server():
             self.lr*=0.99
         models = []
         loss = []
-#         cos_distance_weights = [] #pure fedpav 기준 필요 없을 것 같음!! 
         data_sizes = []
         current_client_list = random.sample(self.client_list, self.num_of_clients) #cross-device도 가능은 함!!
         for i in current_client_list:
             self.clients[i].train(self.federated_model, use_cuda, self.lr)
-#             cos_distance_weights.append(self.clients[i].get_cos_distance_weight()) #pure fedpav 기준 필요 없을 것 같음!! 
             loss.append(self.clients[i].get_train_loss())
             models.append(self.clients[i].get_model())
             data_sizes.append(self.clients[i].get_data_sizes())
 
-#         if epoch==0:
-#             self.L0 = torch.Tensor(loss) #L0은 언급되지 않아서 주석처리 해도 될듯!!
 
         avg_loss = sum(loss) / self.num_of_clients
 
@@ -85,9 +81,6 @@ class Server():
         
         weights = data_sizes
         
-#         if cdw: #pure fedpav 기준 필요 없을 것 같음!! 
-#             print("cos distance weights:", cos_distance_weights)
-#             weights = cos_distance_weights
 
         self.federated_model = aggregate_models(models, weights)
 
