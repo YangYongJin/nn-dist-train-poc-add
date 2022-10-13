@@ -12,26 +12,6 @@ import random
 import torch.optim as optim
 from torchvision import datasets
 import sys
-# def add_model(dst_model, src_model, dst_no_data, src_no_data): #다른 디바이스에 있는 것을 하는것은 jetson nano에서 어려울듯 싶어 fedml로 대체!!
-#     if dst_model is None:
-#         result = copy.deepcopy(src_model)
-#         return result
-#     params1 = src_model.named_parameters()
-#     params2 = dst_model.named_parameters()
-#     dict_params2 = dict(params2)
-#     with torch.no_grad():
-#         for name1, param1 in params1:
-#             if name1 in dict_params2:
-#                 dict_params2[name1].set_(param1.data*src_no_data + dict_params2[name1].data*dst_no_data)
-#     return dst_model
-
-# def scale_model(model, scale):
-#     params = model.named_parameters()
-#     dict_params = dict(params)
-#     with torch.no_grad():
-#         for name, param in dict_params.items():
-#             dict_params[name].set_(dict_params[name].data * scale)
-#     return model
 
 def aggregate_models(models, weights):
     """aggregate models based on weights
