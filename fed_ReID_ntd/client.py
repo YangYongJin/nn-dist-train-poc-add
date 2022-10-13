@@ -108,8 +108,6 @@ class Client():
         self.model.classifier.classifier = nn.Sequential()
 
 
-#     def generate_soft_label(self, x, regularization):#pure fedpav 기준 필요 없을 것 같음!! 
-#         return self.optimization.kd_generate_soft_label(self.model, x, regularization)
 
     def get_model(self):
         return self.model.cpu().state_dict()
