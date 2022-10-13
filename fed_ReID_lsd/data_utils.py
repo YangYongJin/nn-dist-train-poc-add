@@ -54,9 +54,6 @@ class Data():
             'val': transforms.Compose(transform_val),
         }        
 
-#     def preprocess_kd_data(self, dataset):
-#         loader, image_dataset = self.preprocess_one_train_dataset(dataset)
-#         self.kd_loader = loader
 
 
     def preprocess_one_train_dataset(self, dataset): # 한 클라이언트의 train dataset, train loader를 output으로 내놓는다.
@@ -149,7 +146,6 @@ class Data():
         self.transform() #self.data_transforms 형성!!
         self.preprocess_train()#ImageDataset 통해 transformation
         self.preprocess_test()#ImageDataset 통해 transformation
-#         self.preprocess_kd_data('cuhk02')
 
 def get_camera_ids(img_paths):
     """get camera id and labels by image path
