@@ -64,7 +64,6 @@ def train():
     print(args)
     
     use_cuda = torch.cuda.is_available()
-#     device = torch.device("cuda" if use_cuda else "cpu")
     device = torch.device("cuda:{}".format(args.gpu_ids) if use_cuda else "cpu")
     set_random_seed(1)
 
