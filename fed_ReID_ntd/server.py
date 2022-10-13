@@ -129,12 +129,7 @@ class Server():
         print('We use the scale: %s'%self.multiple_scale)#multiple scale 의미 없는 것 같음
         
         for dataset in self.data.datasets:
-            
-#             self.federated_model = self.federated_model.eval()
             self.federated_model_0.load_state_dict(self.federated_model)
-#             if use_cuda:
-# #                 self.federated_model = self.federated_model.cuda()
-#                self.federated_model_0=self.federated_model_0.to(self.device)
             
             with torch.no_grad():
                 gallery_feature = extract_feature(self.federated_model_0, self.data.test_loaders[dataset]['gallery'], self.multiple_scale, self.device) #각 gallery 데이타의 normalized된 feature vector를 concatenate한다.
@@ -159,25 +154,3 @@ class Server():
 
             os.system('python evaluate.py --result_dir {} --dataset {}'.format(os.path.join(self.project_dir, 'model', self.model_name), dataset))
 
-#     def knowledge_distillation(self, regularization):#pure fedpav 기준 필요 없을 것 같음!! 
-#         MSEloss = nn.MSELoss().to(self.device)
-#         optimizer = optim.SGD(self.federated_model.parameters(), lr=self.lr*0.01, weight_decay=5e-4, momentum=0.9, nesterov=True)
-#         self.federated_model.train()
-
-#         for _, (x, target) in enumerate(self.data.kd_loader): 
-#             x, target = x.to(self.device), target.to(self.device)
-#             # target=target.long()
-#             optimizer.zero_grad()
-#             soft_target = torch.Tensor([[0]*512]*len(x)).to(self.device)
-        
-#             for i in self.client_list:
-#                 i_label = (self.clients[i].generate_soft_label(x, regularization))
-#                 soft_target += i_label
-#             soft_target /= len(self.client_list)
-        
-#             output = self.federated_model(x)
-            
-#             loss = MSEloss(output, soft_target)
-#             loss.backward()
-#             optimizer.step()
-#             print("train_loss_fine_tuning", loss.data)`
