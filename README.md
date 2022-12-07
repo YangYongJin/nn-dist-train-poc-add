@@ -157,6 +157,7 @@ Algorithm: Federated Partial Averaging (FedPav)
 
 # Result of federated image classification (dataset:cifar 10) 
 
+communication round:3, local iteration:1
 
 ||1st|2nd|3rd|
 |------|---|---|---|
@@ -165,7 +166,13 @@ Algorithm: Federated Partial Averaging (FedPav)
 |accuracy improvement|12.41|6.29|13.00|
 
 # Result of federated vehicle re-id (dataset: veri 776) 
-|제목|1st|2nd|3rd|
-|------|---|---|---|
-|fedavg|54.31|58.84|51.55|
-|fedntd|66.72|65.13|64.55|
+
+communication round:30, local iteration:1
+
+CMC (Cumulative Matching Characteristics)
+AP (Average Precision)
+
+||CMC rank@1|CMC Rank@5|CMC Rank@10|AP|
+|------|---|---|---|---|
+|fedpav|40.00|72.50|85.00|0.19|
+|fedntd|45.00|75.00|90.00|0.20|
