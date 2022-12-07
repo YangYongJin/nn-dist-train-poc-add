@@ -4,6 +4,12 @@
 This work was supported by Institute of Information & communications Technology Planning & Evaluation (IITP) grant funded by the Korea government(MSIT) (No. 2021-0-00907, Development of Adaptive and Lightweight Edge-Collaborative Analysis Technology for Enabling Proactively Immediate Response and Rapid Learning).
 
 
+# Directory explanation
+
+1. Federated image classification: embedded_devices (fedavg), fedntd_embedded_devices (fedntd)
+2. Federated Re-ID: fedpav_reid (fedpav), fedntd_reid(fedpav+fedntd)
+
+
 
 # Federated Learning on Embedded Devices with Flower
 
@@ -132,14 +138,24 @@ Depending on the model of RapsberryPi you have, running the smaller `Net` model 
 $ ./run_pi.sh --server_address=<SERVER_ADDRESS> --cid=0 --model=Net
 ```
 
-### Baseline and proposed Algorithm for federated image classification (fedavg vs fedntd)
+### Baseline(fedavg) and proposed Algorithm(fedntd) for federated image classification 
 
 
 [**"Preservation of Global Knowledge by Not-True Distillation in Federated Learning (NeurIPS 2022)"**](https://arxiv.org/abs/2106.03097).
 
 <img src="./fedntd.png" width="1200"/>
 
-# Result (dataset:cifar 10)
+### Baseline Algorithm for federated re-id (fedpav)
+
+Code for ACMMM 2020 oral paper - **[Performance Optimization for Federated Person Re-identification via Benchmark Analysis](https://arxiv.org/abs/2008.11560)**
+
+Personal re-identification is an important computer vision task, but its development is constrained by the increasing privacy concerns. Federated learning is a privacy-preserving machine learning technique that learns a shared model across decentralized clients. In this work, we implement federated learning to person re-identification (**FedReID**) and optimize its performance affected by **statistical heterogeneity** in the real-world scenario. 
+
+Algorithm: Federated Partial Averaging (FedPav)
+
+<img src="./fedpav-new.png" width="700">
+
+# Result (dataset:cifar 10) 
 
 
 |제목|1st|2nd|3rd|
