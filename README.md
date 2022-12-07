@@ -57,29 +57,6 @@ The only requirement for the server is to have flower installed. You can do so b
     $ sudo apt-get update && sudo apt-get install git -y
     ```
 
-6. (optional) additional packages:
-        <img align="right" style="padding-top: 40px; padding-left: 15px" width="575" height="380" src="media/tmux_jtop_view.gif">
-     * [jtop](https://github.com/rbonghi/jetson_stats),  to monitor CPU/GPU utilization, power consumption and, many more.
-        ```bash
-        # First we need to install pip3
-        $ sudo apt-get install python3-pip -y 
-        # updated pip3
-        $ sudo pip3 install -U pip
-        # finally, install jtop
-        $ sudo -H pip3 install -U jetson-stats
-        ```
-     * [TMUX](https://github.com/tmux/tmux/wiki), a terminal multiplexer.
-        ```bash
-        # install tmux
-        $ sudo apt-get install tmux -y
-        # add mouse support
-        $ echo set -g mouse on > ~/.tmux.conf
-        ``` 
-
-7. Power modes: The Jetson devices can operate at different power modes, each making use of more or less CPU cores clocked at different freqencies. The right power mode might very much depend on the application and scenario. When power consumption is not a limiting factor, we could use the highest 15W mode using all 6 CPU cores. On the other hand, if the devices are battery-powered we might want to make use of a low power mode using 10W and 2 CPU cores. All the details regarding the different power modes of a Jetson Xavier-NX can be found [here](https://docs.nvidia.com/jetson/l4t/index.html#page/Tegra%2520Linux%2520Driver%2520Package%2520Development%2520Guide%2Fpower_management_jetson_xavier.html%23wwpID0E0NO0HA). For this demo we'll be setting the device to the high performance mode:
-    ```bash
-    $ sudo /usr/sbin/nvpmodel -m 2 # 15W with 6cpus @ 1.4GHz
-    ```
 
 ## Setting up a Raspberry Pi (3B+ or 4B)
 
@@ -103,13 +80,12 @@ The only requirement for the server is to have flower installed. You can do so b
     $ newgrp docker
     ```
 
-3. (optional) additional packages: you could install `TMUX` (see point `6` above) and `htop` as a replacement for `jtop` (which is only available for Jetson devices). Htop can be installed via: `sudo apt-get install htop -y`.
 
-# Running FL training with Flower
+# Dataset
 
-For this demo we'll be using [CIFAR-10](https://www.cs.toronto.edu/~kriz/cifar.html), a popular dataset for image classification comprised of 10 classes (e.g. car, bird, airplane) and a total of 60K `32x32` RGB images. The training set contains 50K images. The server will automatically download the dataset should it not be found in `./data`. To keep the client side simple, the datasets will be downloaded when building the docker image. This will happen as the first stage in both `run_pi.sh` and `run_jetson.sh`. 
+For this demo we'll be using cifar 10 and veri 776. cifar 10 (https://www.cs.toronto.edu/~kriz/cifar.html), a popular dataset for image classification comprised of 10 classes (e.g. car, bird, airplane) and a total of 60K `32x32` RGB images. The training set contains 50K images. veri776 (https://github.com/JDAI-CV/VeRidataset), is  a large-scale benchmark dateset for vehicle Re-Id in the real-world urban surveillance scenario. It contains over 50,000 images of 776 vehicles captured by 20 cameras covering an 1.0 km^2 area in 24 hours, which makes the dataset scalable enough for vehicle Re-Id and other related research. The images are captured in a real-world unconstrained surveillance scene and labeled with varied attributes, e.g. BBoxes, types, colors, and brands. So complicated models can be learnt and evaluated for vehicle Re-Id. Each vehicle is captured by 2 ∼ 18 cameras in different viewpoints, illuminations, resolutions, and occlusions, which provides high recurrence rate for vehicle Re-Id in practical surveillance environment. It is also labeled with sufficient license plates and spatiotemporal information, such as the BBoxes of plates, plate strings, the timestamps of vehicles, and the distances between neighbouring cameras. The server will automatically download the dataset should it not be found in `./data`. To keep the client side simple, the datasets will be downloaded when building the docker image. This will happen as the first stage in both `run_pi.sh` and `run_jetson.sh`.
 
->If you'd like to make use of your own dataset you could [mount it](https://docs.docker.com/storage/volumes/) to the client docker container when calling `docker run`. We leave this an other more advanced topics for a future example.
+&ensp;&ensp;&ensp;&ensp;![Image](./VeRi_240.png)&ensp;&ensp;![Image](./VeRi2_240.png)
 
 ## Server
 
