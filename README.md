@@ -131,6 +131,15 @@ Depending on the model of RapsberryPi you have, running the smaller `Net` model 
 # note that pulling the base image, extracting the content might take a while (specially on a RPi 3) the first time you run this.
 $ ./run_pi.sh --server_address=<SERVER_ADDRESS> --cid=0 --model=Net
 ```
+### Baseline Algorithm for federated image classification (fedavg)
+
+### proposed Algorithm for federated image classification (fedntd)
+
+
+[**"Preservation of Global Knowledge by Not-True Distillation in Federated Learning (NeurIPS 2022)"**](https://arxiv.org/abs/2106.03097).
+
+<img src="./fedntd.png" width="1200"/>
+
 # Result (dataset:cifar 10)
 
 
