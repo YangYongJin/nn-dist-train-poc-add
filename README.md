@@ -134,21 +134,11 @@ Depending on the model of RapsberryPi you have, running the smaller `Net` model 
 # note that pulling the base image, extracting the content might take a while (specially on a RPi 3) the first time you run this.
 $ ./run_pi.sh --server_address=<SERVER_ADDRESS> --cid=0 --model=Net
 ```
-# Result 
+# Result (dataset:cifar 10)
 
-1 회 
-2 회
-3 회
-기존 모델의 정확도
-54.31
-58.84
-51.55
-측정 모델의 정확도
-66.72
-65.13
-64.55
-정확도 향상률
-12.41
-6.29
-13.00
 
+|제목|1st|2nd|3rd|
+|------|---|---|---|
+|fedavg|54.31|58.84|51.55|
+|fedntd|66.72|65.13|64.55|
+|accuracy improvement|12.41|6.29|13.00|
