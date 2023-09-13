@@ -23,14 +23,9 @@ import flwr as fl
 import numpy as np
 import torch
 import torchvision
-import random
+
 import utils
-torch.manual_seed(1)
-torch.cuda.manual_seed(1)
-torch.backends.cudnn.deterministic=True
-torch.backends.cudnn.benchmark=False
-np.random.seed(1)
-random.seed(1)
+
 # pylint: disable=no-member
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # pylint: enable=no-member
@@ -75,7 +70,7 @@ parser.add_argument(
     "--model",
     type=str,
     default="ResNet18",
-    choices=["Net", "ResNet18","ResNet8"],
+    choices=["Net", "ResNet18"],
     help="model to train",
 )
 parser.add_argument(
@@ -115,7 +110,7 @@ def main() -> None:
         fraction_fit=args.sample_fraction,
         min_fit_clients=args.min_sample_size,
         min_available_clients=args.min_num_clients,
-        eval_fn=get_eval_fn(testset),
+        evaluate_fn=get_eval_fn(testset),
         on_fit_config_fn=fit_config,
     )
     server = fl.server.Server(client_manager=client_manager, strategy=strategy)
@@ -124,7 +119,7 @@ def main() -> None:
     fl.server.start_server(
         server_address=args.server_address,
         server=server,
-        config={"num_rounds": args.rounds},
+        config=fl.server.ServerConfig(num_rounds=args.rounds),
     )
 
 
@@ -132,7 +127,7 @@ def fit_config(server_round: int) -> Dict[str, fl.common.Scalar]:
     """Return a configuration with static batch size and (local) epochs."""
     config = {
         "epoch_global": str(server_round),
-        "epochs": str(5),
+        "epochs": str(1),
         "batch_size": str(args.batch_size),
         "num_workers": str(args.num_workers),
         "pin_memory": str(args.pin_memory),
@@ -140,7 +135,7 @@ def fit_config(server_round: int) -> Dict[str, fl.common.Scalar]:
     return config
 
 
-def set_weights(model: torch.nn.ModuleList, weights: fl.common.Weights) -> None:
+def set_weights(model: torch.nn.ModuleList, weights: fl.common.NDArrays) -> None:
     """Set model weights from a list of NumPy ndarrays."""
     state_dict = OrderedDict(
         {
@@ -153,10 +148,10 @@ def set_weights(model: torch.nn.ModuleList, weights: fl.common.Weights) -> None:
 
 def get_eval_fn(
     testset: torchvision.datasets.CIFAR10,
-) -> Callable[[fl.common.Weights], Optional[Tuple[float, float]]]:
+) -> Callable[[fl.common.NDArrays], Optional[Tuple[float, float]]]:
     """Return an evaluation function for centralized evaluation."""
 
-    def evaluate(weights: fl.common.Weights) -> Optional[Tuple[float, float]]:
+    def evaluate(weights: fl.common.NDArrays) -> Optional[Tuple[float, float]]:
         """Use the entire CIFAR-10 test set for evaluation."""
 
         model = utils.load_model(args.model)

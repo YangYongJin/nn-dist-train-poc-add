@@ -24,14 +24,7 @@ import flwr as fl
 import numpy as np
 import torch
 import torchvision
-from flwr.common import (
-    EvaluateIns,
-    EvaluateRes,
-    FitIns,
-    FitRes,
-    ParametersRes,
-    NDArrays,
-)
+from flwr.common import EvaluateIns, EvaluateRes, FitIns, FitRes, ParametersRes, Weights
 
 import utils
 
@@ -40,12 +33,12 @@ DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # pylint: enable=no-member
 
 
-def get_weights(model: torch.nn.ModuleList) -> fl.common.NDArrays:
+def get_weights(model: torch.nn.ModuleList) -> fl.common.Weights:
     """Get model weights as a list of NumPy ndarrays."""
     return [val.cpu().numpy() for _, val in model.state_dict().items()]
 
 
-def set_weights(model: torch.nn.ModuleList, weights: fl.common.NDArrays) -> None:
+def set_weights(model: torch.nn.ModuleList, weights: fl.common.Weights) -> None:
     """Set model weights from a list of NumPy ndarrays."""
     state_dict = OrderedDict(
         {
@@ -57,7 +50,8 @@ def set_weights(model: torch.nn.ModuleList, weights: fl.common.NDArrays) -> None
 
 
 class CifarClient(fl.client.Client):
-    """Flower client implementing CIFAR-10 image classification using PyTorch."""
+    """Flower client implementing CIFAR-10 image classification using
+    PyTorch."""
 
     def __init__(
         self,
@@ -71,14 +65,15 @@ class CifarClient(fl.client.Client):
         self.trainset = trainset
         self.testset = testset
 
-    def get_parameters(self, config) -> ParametersRes:
+    def get_parameters(self) -> ParametersRes:
         print(f"Client {self.cid}: get_parameters")
 
-        weights: NDArrays = get_weights(self.model)
-        parameters = fl.common.ndarrays_to_parameters(weights)
+        weights: Weights = get_weights(self.model)
+        parameters = fl.common.weights_to_parameters(weights)
         return ParametersRes(parameters=parameters)
 
     def _instantiate_model(self, model_str: str):
+
         # will load utils.model_str
         m = getattr(import_module("utils"), model_str)
         # instantiate model
@@ -87,7 +82,7 @@ class CifarClient(fl.client.Client):
     def fit(self, ins: FitIns) -> FitRes:
         print(f"Client {self.cid}: fit")
 
-        weights: NDArrays = fl.common.parameters_to_ndarrays(ins.parameters)
+        weights: Weights = fl.common.parameters_to_weights(ins.parameters)
         config = ins.config
         fit_begin = timeit.default_timer()
 
@@ -116,8 +111,8 @@ class CifarClient(fl.client.Client):
         utils.train(self.model, trainloader, epochs=epochs, device=DEVICE)
 
         # Return the refined weights and the number of examples used for training
-        weights_prime: NDArrays = get_weights(self.model)
-        params_prime = fl.common.ndarrays_to_parameters(weights_prime)
+        weights_prime: Weights = get_weights(self.model)
+        params_prime = fl.common.weights_to_parameters(weights_prime)
         num_examples_train = len(self.trainset)
         metrics = {"duration": timeit.default_timer() - fit_begin}
         return FitRes(
@@ -127,7 +122,7 @@ class CifarClient(fl.client.Client):
     def evaluate(self, ins: EvaluateIns) -> EvaluateRes:
         print(f"Client {self.cid}: evaluate")
 
-        weights = fl.common.parameters_to_ndarrays(ins.parameters)
+        weights = fl.common.parameters_to_weights(ins.parameters)
 
         # Use provided weights to update the local model
         set_weights(self.model, weights)
@@ -171,7 +166,7 @@ def main() -> None:
         "--model",
         type=str,
         default="ResNet18",
-        choices=["Net", "ResNet18"],
+        choices=["Net", "ResNet18","ResNet8"],
         help="model to train",
     )
     args = parser.parse_args()
@@ -187,7 +182,7 @@ def main() -> None:
 
     # Start client
     client = CifarClient(args.cid, model, trainset, testset)
-    fl.client.start_client(server_address=args.server_address, client=client)
+    fl.client.start_client(args.server_address, client)
 
 
 if __name__ == "__main__":
