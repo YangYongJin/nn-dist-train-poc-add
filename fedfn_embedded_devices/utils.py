@@ -210,7 +210,13 @@ class Net(nn.Module):
         x = x.view(-1, 16 * 5 * 5)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = self.fc3(x)
+
+        # normalize feature
+        x = x.view(x.size(0), -1)
+    
+        normalized_feature= nn.functional.normalize(x, p=2, dim=1)
+
+        x = self.fc3(normalized_feature)
         return x
 
     def get_weights(self) -> fl.common.Weights:

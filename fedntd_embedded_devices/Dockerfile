@@ -31,5 +31,7 @@ RUN pip3 install --upgrade pip
 
 # making sure the latest version of flower is installed
 RUN pip3 install flwr==0.19.0
+# for tx2
+# RUN pip3 install flwr==0.18.0
 
 ENTRYPOINT ["python3","-u","./client.py"]
