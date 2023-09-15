@@ -18,24 +18,34 @@
 import argparse
 from collections import OrderedDict
 from typing import Callable, Dict, Optional, Tuple
-
+from logging import INFO, DEBUG
 import flwr as fl
 import numpy as np
 import torch
 import torchvision
 import random
 import utils
-torch.manual_seed(1)
-torch.cuda.manual_seed(1)
+import time
+import os
+
 torch.backends.cudnn.deterministic=True
 torch.backends.cudnn.benchmark=False
-np.random.seed(1)
-random.seed(1)
+
+
 # pylint: disable=no-member
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # pylint: enable=no-member
 
 parser = argparse.ArgumentParser(description="Flower")
+
+# set seed
+parser.add_argument(
+    "--random_seed",
+    type=int,
+    default=1,
+    help="random seed (default: 1)",
+)
+
 parser.add_argument(
     "--server_address",
     type=str,
@@ -68,8 +78,9 @@ parser.add_argument(
 )
 parser.add_argument(
     "--log_host",
+    default="./log",
     type=str,
-    help="Logserver address (no default)",
+    help="Log directory (no default)",
 )
 parser.add_argument(
     "--model",
@@ -84,6 +95,21 @@ parser.add_argument(
     default=32,
     help="training batch size",
 )
+
+parser.add_argument(
+    "--epochs",
+    type=int,
+    default=1,
+    help="number of epochs to train",
+)
+
+parser.add_argument(
+    "--lr",
+    type=float,
+    default=0.1,
+    help="learning rate",
+)
+
 parser.add_argument(
     "--num_workers",
     type=int,
@@ -98,13 +124,19 @@ def main() -> None:
     """Start server and train five rounds."""
 
     print(args)
+    torch.manual_seed(args.random_seed)
+    torch.cuda.manual_seed(args.random_seed)
+    np.random.seed(args.random_seed)
+    random.seed(args.random_seed)
+
+
 
     assert (
         args.min_sample_size <= args.min_num_clients
     ), f"Num_clients shouldn't be lower than min_sample_size"
 
     # Configure logger
-    fl.common.logger.configure("server", host=args.log_host)
+    fl.common.logger.configure(identifier=f"FedFN_{args.random_seed}", filename=os.path.join(args.log_host, f"seed_{args.random_seed}.log"))
 
     # Load evaluation data
     _, testset = utils.load_cifar(download=True)
@@ -120,6 +152,9 @@ def main() -> None:
     )
     server = fl.server.Server(client_manager=client_manager, strategy=strategy)
 
+    # Start timer
+    start_time = time.time()
+
     # Run server
     fl.server.start_server(
         server_address=args.server_address,
@@ -127,12 +162,17 @@ def main() -> None:
         config={"num_rounds": args.rounds},
     )
 
+    # Stop timer in minutes
+    end_time = time.time()
+    print(f"Total time for training {args.round}: {(end_time - start_time)/60} minutes")
+
 
 def fit_config(server_round: int) -> Dict[str, fl.common.Scalar]:
     """Return a configuration with static batch size and (local) epochs."""
     config = {
         "epoch_global": str(server_round),
-        "epochs": str(5),
+        "epochs": str(args.epochs),
+        "lr": str(args.lr),
         "batch_size": str(args.batch_size),
         "num_workers": str(args.num_workers),
         "pin_memory": str(args.pin_memory),
@@ -165,6 +205,13 @@ def get_eval_fn(
 
         testloader = torch.utils.data.DataLoader(testset, batch_size=32, shuffle=False)
         loss, accuracy = utils.test(model, testloader, device=DEVICE)
+
+        # log this accuracy
+        if args.log_host:
+            fl.common.logger.log(
+                INFO, f"eval/loss {loss} accuracy {accuracy}"
+            )
+
         return loss, {"accuracy": accuracy}
 
     return evaluate

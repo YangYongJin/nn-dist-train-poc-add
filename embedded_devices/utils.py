@@ -300,8 +300,8 @@ def train(
 
             # print statistics
             running_loss += loss.item()
-            if i % 2000 == 1999:  # print every 2000 mini-batches
-                print("[%d, %5d] loss: %.3f" % (epoch + 1, i + 1, running_loss / 2000))
+            if i % 50 == 49:  # print every 2000 mini-batches
+                print("[%d, %5d] loss: %.3f" % (epoch + 1, i + 1, running_loss / 50))
                 running_loss = 0.0
 
     print(f"Epoch took: {time() - t:.2f} seconds")
@@ -316,14 +316,14 @@ def test(
     criterion = nn.CrossEntropyLoss()
     correct = 0
     total = 0
-    loss = 0.0
+    losses = []
     with torch.no_grad():
         for data in testloader:
             images, labels = data[0].to(device), data[1].to(device)
             outputs = net(images)
-            loss += criterion(outputs, labels).item()
+            losses.append(criterion(outputs, labels).item())
             _, predicted = torch.max(outputs.data, 1)  # pylint: disable=no-member
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
     accuracy = correct / total
-    return loss, accuracy
+    return np.mean(losses), accuracy
