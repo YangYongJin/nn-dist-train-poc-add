@@ -8,6 +8,7 @@ from torch.autograd import Variable
 import copy
 from optimization import Optimization
 import sys
+
 class Client():
     def __init__(self, cid, data, device, project_dir, model_name, local_epoch, lr, batch_size, drop_rate, stride):#drop_rate, stride는 모르겠음!!
         self.cid = cid

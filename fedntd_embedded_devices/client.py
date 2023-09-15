@@ -30,6 +30,7 @@ from torch.utils.data import Dataset
 
 import utils
 
+
 class DatasetSplit(Dataset):
     def __init__(self, dataset, idxs):
         self.dataset = dataset
@@ -73,12 +74,13 @@ class CifarClient(fl.client.Client):
         model: torch.nn.Module,
         trainset: torchvision.datasets.CIFAR10,
         testset: torchvision.datasets.CIFAR10,
+        classes: list,
     ) -> None:
         self.cid = cid
         self.model = model
         self.trainset = trainset
         self.testset = testset
-        self.classes = [0,1]
+        self.classes = classes
 
     def get_parameters(self) -> ParametersRes:
         print(f"Client {self.cid}: get_parameters")
@@ -121,6 +123,7 @@ class CifarClient(fl.client.Client):
             kwargs = {"drop_last": True}
 
         # Train model
+    
         id_idxs=[i for i, (_, label) in enumerate(self.trainset) if label in self.classes]
         trainloader = torch.utils.data.DataLoader(
             DatasetSplit(self.trainset, id_idxs), batch_size=batch_size, shuffle=True, **kwargs
@@ -186,6 +189,15 @@ def main() -> None:
         choices=["Net", "ResNet18","ResNet8"],
         help="model to train",
     )
+    # arguments for self.classes (default: [0,1]) list
+    parser.add_argument(
+        "--classes",
+        nargs="+",
+        type=int,
+        default=[0,1],
+        help="list of classes to train on",
+    )
+    
     args = parser.parse_args()
 
     # Configure logger
@@ -198,7 +210,7 @@ def main() -> None:
     trainset, testset = utils.load_cifar()
 
     # Start client
-    client = CifarClient(args.cid, model, trainset, testset)
+    client = CifarClient(args.cid, model, trainset, testset, args.classes)
     fl.client.start_client(args.server_address, client)
 
 
