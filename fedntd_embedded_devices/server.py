@@ -164,7 +164,7 @@ def main() -> None:
 
     # Stop timer in minutes
     end_time = time.time()
-    print(f"Total time for training {args.round}: {(end_time - start_time)/60} minutes")
+    print(f"Total time for training {args.rounds}: {(end_time - start_time)/60} minutes")
 
 
 def fit_config(server_round: int) -> Dict[str, fl.common.Scalar]:
