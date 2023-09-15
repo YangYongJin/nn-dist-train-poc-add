@@ -25,7 +25,7 @@ import torch
 import torchvision
 import random
 import utils
-
+import time
 import os
 
 torch.backends.cudnn.deterministic=True
@@ -78,6 +78,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--log_host",
+    default="./log",
     type=str,
     help="Log directory (no default)",
 )
@@ -151,12 +152,19 @@ def main() -> None:
     )
     server = fl.server.Server(client_manager=client_manager, strategy=strategy)
 
+    # Start timer
+    start_time = time.time()
+
     # Run server
     fl.server.start_server(
         server_address=args.server_address,
         server=server,
         config={"num_rounds": args.rounds},
     )
+
+    # Stop timer in minutes
+    end_time = time.time()
+    print(f"Total time for training {args.round}: {(end_time - start_time)/60} minutes")
 
 
 def fit_config(server_round: int) -> Dict[str, fl.common.Scalar]:
