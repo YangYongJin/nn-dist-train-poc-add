@@ -18,13 +18,15 @@
 import argparse
 from collections import OrderedDict
 from typing import Callable, Dict, Optional, Tuple
-
+from logging import INFO, DEBUG
 import flwr as fl
 import numpy as np
 import torch
 import torchvision
 import random
 import utils
+
+import os
 
 torch.backends.cudnn.deterministic=True
 torch.backends.cudnn.benchmark=False
@@ -77,7 +79,7 @@ parser.add_argument(
 parser.add_argument(
     "--log_host",
     type=str,
-    help="Logserver address (no default)",
+    help="Log directory (no default)",
 )
 parser.add_argument(
     "--model",
@@ -133,7 +135,7 @@ def main() -> None:
     ), f"Num_clients shouldn't be lower than min_sample_size"
 
     # Configure logger
-    fl.common.logger.configure("server", host=args.log_host)
+    fl.common.logger.configure(identifier=f"FedFN_{args.random_seed}", filename=os.path.join(args.log_host, f"seed_{args.random_seed}.log"))
 
     # Load evaluation data
     _, testset = utils.load_cifar(download=True)
@@ -195,6 +197,13 @@ def get_eval_fn(
 
         testloader = torch.utils.data.DataLoader(testset, batch_size=32, shuffle=False)
         loss, accuracy = utils.test(model, testloader, device=DEVICE)
+
+        # log this accuracy
+        if args.log_host:
+            fl.common.logger.log(
+                INFO, f"eval/loss {loss} accuracy {accuracy}"
+            )
+
         return loss, {"accuracy": accuracy}
 
     return evaluate
