@@ -88,6 +88,7 @@ class CifarClient(fl.client.Client):
 
         # Get training config
         epochs = int(config["epochs"])
+        lr = float(config["lr"])
         batch_size = int(config["batch_size"])
         pin_memory = bool(config["pin_memory"])
         num_workers = int(config["num_workers"])
@@ -108,7 +109,7 @@ class CifarClient(fl.client.Client):
         trainloader = torch.utils.data.DataLoader(
             self.trainset, batch_size=batch_size, shuffle=True, **kwargs
         )
-        utils.train(self.model, trainloader, epochs=epochs, device=DEVICE)
+        utils.train(self.model, trainloader, lr=lr, epochs=epochs, device=DEVICE)
 
         # Return the refined weights and the number of examples used for training
         weights_prime: Weights = get_weights(self.model)
