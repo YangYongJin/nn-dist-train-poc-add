@@ -39,6 +39,7 @@ from torch import Tensor
 from torchvision import datasets
 from torchvision.models import resnet18
 import copy
+import numpy as np
 DATA_ROOT = Path("./data")
 
 __all__ = ['resnet']
@@ -227,18 +228,32 @@ def ResNet8():
     model= RESNET(depth=8, num_classes=10)
     return model
     
-def ResNet18():
+class ResNet18(nn.Module):
     """Returns a ResNet18 model from TorchVision adapted for CIFAR-10."""
+    def __init__(self):
+        super(ResNet18, self).__init__()
+        self.feature_extractor = resnet18(num_classes=10)
 
-    model = resnet18(num_classes=10)
 
-    # replace w/ smaller input layer
-    model.conv1 = torch.nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
-    nn.init.kaiming_normal_(model.conv1.weight, mode="fan_out", nonlinearity="relu")
-    # no need for pooling if training for CIFAR-10
-    model.maxpool = torch.nn.Identity()
+        # replace w/ smaller input layer
+        self.feature_extractor.conv1 = torch.nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
+        nn.init.kaiming_normal_(self.feature_extractor.conv1.weight, mode="fan_out", nonlinearity="relu")
+        # no need for pooling if training for CIFAR-10
+        self.feature_extractor.maxpool = torch.nn.Identity()
+        self.feature_extractor.fc = torch.nn.Identity()
+        self.fc = nn.Linear(512, 10)
 
-    return model
+    def forward(self, x):
+        x = self.feature_extractor(x)
+        # normalize feature
+        x = x.view(x.size(0), -1)
+    
+        normalized_feature= nn.functional.normalize(x, p=2, dim=1)#feature normalize!!
+
+        x = self.fc(normalized_feature)
+
+        return x
+
 
 
 def load_model(model_name: str) -> nn.Module:
@@ -273,14 +288,14 @@ def load_cifar(download=False) -> Tuple[datasets.CIFAR10, datasets.CIFAR10]:
 def train(
     net: Net,
     trainloader: torch.utils.data.DataLoader,
+    lr: float,
     epochs: int,
     device: torch.device,  # pylint: disable=no-member
 ) -> None:
     """Train the network."""
     # Define loss and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(net.parameters(), lr=0.1)
-
+    optimizer = torch.optim.SGD(net.parameters(), lr=lr)
     print(f"Training {epochs} epoch(s) w/ {len(trainloader)} batches each")
     t = time()
     # Train the network
@@ -300,8 +315,8 @@ def train(
 
             # print statistics
             running_loss += loss.item()
-            if i % 2000 == 1999:  # print every 2000 mini-batches
-                print("[%d, %5d] loss: %.3f" % (epoch + 1, i + 1, running_loss / 2000))
+            if i % 50 == 49:  # print every 2000 mini-batches
+                print("[%d, %5d] loss: %.3f" % (epoch + 1, i + 1, running_loss / 50))
                 running_loss = 0.0
 
     print(f"Epoch took: {time() - t:.2f} seconds")
@@ -316,14 +331,14 @@ def test(
     criterion = nn.CrossEntropyLoss()
     correct = 0
     total = 0
-    loss = 0.0
+    losses = []
     with torch.no_grad():
         for data in testloader:
             images, labels = data[0].to(device), data[1].to(device)
             outputs = net(images)
-            loss += criterion(outputs, labels).item()
+            losses.append(criterion(outputs, labels).item())
             _, predicted = torch.max(outputs.data, 1)  # pylint: disable=no-member
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
     accuracy = correct / total
-    return loss, accuracy
+    return np.mean(losses), accuracy

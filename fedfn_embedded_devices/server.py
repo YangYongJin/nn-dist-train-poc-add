@@ -23,14 +23,27 @@ import flwr as fl
 import numpy as np
 import torch
 import torchvision
-
+import random
 import utils
+
+torch.backends.cudnn.deterministic=True
+torch.backends.cudnn.benchmark=False
+
 
 # pylint: disable=no-member
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # pylint: enable=no-member
 
 parser = argparse.ArgumentParser(description="Flower")
+
+# set seed
+parser.add_argument(
+    "--random_seed",
+    type=int,
+    default=1,
+    help="random seed (default: 1)",
+)
+
 parser.add_argument(
     "--server_address",
     type=str,
@@ -70,7 +83,7 @@ parser.add_argument(
     "--model",
     type=str,
     default="ResNet18",
-    choices=["Net", "ResNet18"],
+    choices=["Net", "ResNet18","ResNet8"],
     help="model to train",
 )
 parser.add_argument(
@@ -79,6 +92,21 @@ parser.add_argument(
     default=32,
     help="training batch size",
 )
+
+parser.add_argument(
+    "--epochs",
+    type=int,
+    default=1,
+    help="number of epochs to train",
+)
+
+parser.add_argument(
+    "--lr",
+    type=float,
+    default=0.1,
+    help="learning rate",
+)
+
 parser.add_argument(
     "--num_workers",
     type=int,
@@ -93,6 +121,12 @@ def main() -> None:
     """Start server and train five rounds."""
 
     print(args)
+    torch.manual_seed(args.random_seed)
+    torch.cuda.manual_seed(args.random_seed)
+    np.random.seed(args.random_seed)
+    random.seed(args.random_seed)
+
+
 
     assert (
         args.min_sample_size <= args.min_num_clients
@@ -110,7 +144,7 @@ def main() -> None:
         fraction_fit=args.sample_fraction,
         min_fit_clients=args.min_sample_size,
         min_available_clients=args.min_num_clients,
-        evaluate_fn=get_eval_fn(testset),
+        eval_fn=get_eval_fn(testset),
         on_fit_config_fn=fit_config,
     )
     server = fl.server.Server(client_manager=client_manager, strategy=strategy)
@@ -119,7 +153,7 @@ def main() -> None:
     fl.server.start_server(
         server_address=args.server_address,
         server=server,
-        config=fl.server.ServerConfig(num_rounds=args.rounds),
+        config={"num_rounds": args.rounds},
     )
 
 
@@ -127,7 +161,8 @@ def fit_config(server_round: int) -> Dict[str, fl.common.Scalar]:
     """Return a configuration with static batch size and (local) epochs."""
     config = {
         "epoch_global": str(server_round),
-        "epochs": str(1),
+        "epochs": str(args.epochs),
+        "lr": str(args.lr),
         "batch_size": str(args.batch_size),
         "num_workers": str(args.num_workers),
         "pin_memory": str(args.pin_memory),
@@ -135,7 +170,7 @@ def fit_config(server_round: int) -> Dict[str, fl.common.Scalar]:
     return config
 
 
-def set_weights(model: torch.nn.ModuleList, weights: fl.common.NDArrays) -> None:
+def set_weights(model: torch.nn.ModuleList, weights: fl.common.Weights) -> None:
     """Set model weights from a list of NumPy ndarrays."""
     state_dict = OrderedDict(
         {
@@ -148,10 +183,10 @@ def set_weights(model: torch.nn.ModuleList, weights: fl.common.NDArrays) -> None
 
 def get_eval_fn(
     testset: torchvision.datasets.CIFAR10,
-) -> Callable[[fl.common.NDArrays], Optional[Tuple[float, float]]]:
+) -> Callable[[fl.common.Weights], Optional[Tuple[float, float]]]:
     """Return an evaluation function for centralized evaluation."""
 
-    def evaluate(weights: fl.common.NDArrays) -> Optional[Tuple[float, float]]:
+    def evaluate(weights: fl.common.Weights) -> Optional[Tuple[float, float]]:
         """Use the entire CIFAR-10 test set for evaluation."""
 
         model = utils.load_model(args.model)
