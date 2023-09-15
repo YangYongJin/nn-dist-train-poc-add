@@ -26,7 +26,22 @@ import torch
 import torchvision
 from flwr.common import EvaluateIns, EvaluateRes, FitIns, FitRes, ParametersRes, Weights
 
+from torch.utils.data import Dataset
+
 import utils
+
+
+class DatasetSplit(Dataset):
+    def __init__(self, dataset, idxs):
+        self.dataset = dataset
+        self.idxs = idxs
+
+    def __len__(self):
+        return len(self.idxs)
+
+    def __getitem__(self, item):
+        image, label = self.dataset[self.idxs[item]]
+        return image, label
 
 # pylint: disable=no-member
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -64,6 +79,7 @@ class CifarClient(fl.client.Client):
         self.model = model
         self.trainset = trainset
         self.testset = testset
+        self.classes = [0,1]
 
     def get_parameters(self) -> ParametersRes:
         print(f"Client {self.cid}: get_parameters")
@@ -106,8 +122,10 @@ class CifarClient(fl.client.Client):
             kwargs = {"drop_last": True}
 
         # Train model
+    
+        id_idxs=[i for i, (_, label) in enumerate(self.trainset) if label in self.classes]
         trainloader = torch.utils.data.DataLoader(
-            self.trainset, batch_size=batch_size, shuffle=True, **kwargs
+            DatasetSplit(self.trainset, id_idxs), batch_size=batch_size, shuffle=True, **kwargs
         )
         utils.train(self.model, trainloader, lr=lr, epochs=epochs, device=DEVICE)
 

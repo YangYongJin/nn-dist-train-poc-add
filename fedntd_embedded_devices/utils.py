@@ -39,6 +39,7 @@ from torch import Tensor
 from torchvision import datasets
 from torchvision.models import resnet18
 import copy
+import numpy as np
 DATA_ROOT = Path("./data")
 
 __all__ = ['resnet']
