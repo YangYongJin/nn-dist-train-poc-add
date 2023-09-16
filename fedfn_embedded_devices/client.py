@@ -27,6 +27,7 @@ import torchvision
 from flwr.common import EvaluateIns, EvaluateRes, FitIns, FitRes, ParametersRes, Weights
 
 from torch.utils.data import Dataset
+import random
 
 import utils
 
@@ -82,6 +83,18 @@ class CifarClient(fl.client.Client):
         self.testset = testset
         self.classes = classes
 
+        # make random lists for selection of classes
+        # select 80% for classes in self.classes and 20% for other classes
+        self.id_idxs = []
+        for i, (_, label) in enumerate(self.trainset):
+            if label in self.classes:
+                if random.random() < 0.8:
+                    self.id_idxs.append(i)
+            else:
+                if random.random() < 0.2:
+                    self.id_idxs.append(i)
+
+
     def get_parameters(self) -> ParametersRes:
         print(f"Client {self.cid}: get_parameters")
 
@@ -123,10 +136,9 @@ class CifarClient(fl.client.Client):
             kwargs = {"drop_last": True}
 
         # Train model
-    
-        id_idxs=[i for i, (_, label) in enumerate(self.trainset) if label in self.classes]
+
         trainloader = torch.utils.data.DataLoader(
-            DatasetSplit(self.trainset, id_idxs), batch_size=batch_size, shuffle=True, **kwargs
+            DatasetSplit(self.trainset, self.id_idxs), batch_size=batch_size, shuffle=True, **kwargs
         )
         utils.train(self.model, trainloader, lr=lr, epochs=epochs, device=DEVICE)
 

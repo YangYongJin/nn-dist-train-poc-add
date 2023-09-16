@@ -328,6 +328,7 @@ def train(
     dg_model.to(device)
     train_criterion= NTD_Loss(10, 3, 1)
     optimizer = torch.optim.SGD(net.parameters(), lr=lr)
+    
 
     print(f"Training {epochs} epoch(s) w/ {len(trainloader)} batches each")
     t = time()
