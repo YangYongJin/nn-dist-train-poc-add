@@ -112,6 +112,14 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "--optimizer",
+    type=str,
+    default="SGD",
+    choices=["SGD", "Adam", "RMSprop", "SGDM"],
+    help="optimizer to use",
+)
+
+parser.add_argument(
     "--num_workers",
     type=int,
     default=4,
@@ -185,6 +193,7 @@ def fit_config(server_round: int) -> Dict[str, fl.common.Scalar]:
         "batch_size": str(args.batch_size),
         "num_workers": str(args.num_workers),
         "pin_memory": str(args.pin_memory),
+        "optimizer": str(args.optimizer),
     }
     return config
 
