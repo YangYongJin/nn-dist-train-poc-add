@@ -132,7 +132,7 @@ BEST_ACCURACY = 0.0
 
 def main() -> None:
     """init wandb"""
-    wandb.init(project="fedavg")
+    wandb.init(project="fedntd")
     wandb.config.update(args)
 
     """Start server and train five rounds."""
