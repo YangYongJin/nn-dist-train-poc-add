@@ -274,13 +274,14 @@ def load_cifar(download=False) -> Tuple[datasets.CIFAR10, datasets.CIFAR10]:
 def train(
     net: Net,
     trainloader: torch.utils.data.DataLoader,
+    lr: float,
     epochs: int,
     device: torch.device,  # pylint: disable=no-member
 ) -> None:
     """Train the network."""
     # Define loss and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(net.parameters(), lr=0.1)
+    optimizer = torch.optim.SGD(net.parameters(), lr=lr)
 
     print(f"Training {epochs} epoch(s) w/ {len(trainloader)} batches each")
     t = time()

@@ -27,6 +27,7 @@ import random
 import utils
 import time
 import os
+import wandb
 
 torch.backends.cudnn.deterministic=True
 torch.backends.cudnn.benchmark=False
@@ -119,8 +120,13 @@ parser.add_argument(
 parser.add_argument("--pin_memory", action="store_true")
 args = parser.parse_args()
 
+BEST_ACCURACY = 0.0
 
 def main() -> None:
+    """init wandb"""
+    wandb.init(project="fedfn", entity="fedfn")
+    wandb.config.update(args)
+
     """Start server and train five rounds."""
 
     print(args)
@@ -214,6 +220,15 @@ def get_eval_fn(
             fl.common.logger.log(
                 INFO, f"eval/loss {loss} accuracy {accuracy}"
             )
+        wandb.log({"accuracy": accuracy, "loss": loss})
+        # update best accuracy 
+        global BEST_ACCURACY
+        if accuracy > BEST_ACCURACY:
+            BEST_ACCURACY = accuracy
+            fl.common.logger.log(
+                INFO, f"eval/loss {loss} accuracy {accuracy} BEST ACCURACY"
+            )
+        wandb.log({"best_accuracy": BEST_ACCURACY})
 
         return loss, {"accuracy": accuracy}
 
