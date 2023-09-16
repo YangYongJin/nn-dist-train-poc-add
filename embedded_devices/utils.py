@@ -276,12 +276,22 @@ def train(
     trainloader: torch.utils.data.DataLoader,
     lr: float,
     epochs: int,
+    optimizer_n: str,
     device: torch.device,  # pylint: disable=no-member
 ) -> None:
     """Train the network."""
     # Define loss and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(net.parameters(), lr=lr)
+    if optimizer_n == "SGD":
+        optimizer = torch.optim.SGD(net.parameters(), lr=lr)
+    elif optimizer_n == "Adam":
+        optimizer = torch.optim.Adam(net.parameters(), lr=lr)
+    elif optimizer_n == "RMSprop":
+        optimizer = torch.optim.RMSprop(net.parameters(), lr=lr)
+    elif optimizer_n == "SGDM":
+        optimizer = torch.optim.SGD(net.parameters(), lr=lr, momentum=0.9)
+    else:
+        raise NotImplementedError(f"optimizer {optimizer_n} is not implemented")
 
     print(f"Training {epochs} epoch(s) w/ {len(trainloader)} batches each")
     t = time()
