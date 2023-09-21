@@ -86,8 +86,8 @@ parser.add_argument(
 parser.add_argument(
     "--model",
     type=str,
-    default="ResNet18",
-    choices=["Net", "ResNet18","ResNet8"],
+    default="resnet",
+    choices=["resnet", "mobilenet"],
     help="model to train",
 )
 parser.add_argument(
@@ -132,7 +132,7 @@ BEST_ACCURACY = 0.0
 
 def main() -> None:
     """init wandb"""
-    wandb.init(project="fedavg")
+    wandb.init(project="feddetector")
     wandb.config.update(args)
 
     """Start server and train five rounds."""
@@ -150,10 +150,10 @@ def main() -> None:
     ), f"Num_clients shouldn't be lower than min_sample_size"
 
     # Configure logger
-    fl.common.logger.configure(identifier=f"FedFN_{args.random_seed}", filename=os.path.join(args.log_host, f"seed_{args.random_seed}.log"))
+    fl.common.logger.configure(identifier=f"Feddetector_{args.random_seed}", filename=os.path.join(args.log_host, f"seed_{args.random_seed}.log"))
 
     # Load evaluation data
-    _, testset = utils.load_cifar(download=True)
+    _, testset = utils.load_coco(download=True)
 
     # Create client_manager, strategy, and server
     client_manager = fl.server.SimpleClientManager()
@@ -222,24 +222,24 @@ def get_eval_fn(
         model.to(DEVICE)
 
         testloader = torch.utils.data.DataLoader(testset, batch_size=32, shuffle=False)
-        loss, accuracy = utils.test(model, testloader, device=DEVICE)
+        mAP_at_05 = utils.test(model, testset, testloader, device=DEVICE)
 
         # log this accuracy
         if args.log_host:
             fl.common.logger.log(
-                INFO, f"eval/loss {loss} accuracy {accuracy}"
+                INFO, f"eval mAP_at_05 {mAP_at_05}"
             )
-        wandb.log({"accuracy": accuracy, "loss": loss})
+        wandb.log({"mAP_at_05": mAP_at_05})
         # update best accuracy 
         global BEST_ACCURACY
-        if accuracy > BEST_ACCURACY:
-            BEST_ACCURACY = accuracy
+        if mAP_at_05 > BEST_ACCURACY:
+            BEST_ACCURACY = mAP_at_05
             fl.common.logger.log(
-                INFO, f"eval/loss {loss} accuracy {accuracy} BEST ACCURACY"
+                INFO, f"eval {mAP_at_05} BEST map"
             )
-        wandb.log({"best_accuracy": BEST_ACCURACY})
+        wandb.log({"best_mAP_at_05": mAP_at_05})
 
-        return loss, {"accuracy": accuracy}
+        return {"mAP_at_05": mAP_at_05}
 
     return evaluate
 

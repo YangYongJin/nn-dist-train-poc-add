@@ -81,18 +81,18 @@ class CifarClient(fl.client.Client):
         self.model = model
         self.trainset = trainset
         self.testset = testset
-        self.classes = classes
+        # self.classes = classes
 
         # make random lists for selection of classes
         # select 80% for classes in self.classes and 20% for other classes
-        self.id_idxs = []
-        for i, (_, label) in enumerate(self.trainset):
-            if label in self.classes:
-                if random.random() < 0.8:
-                    self.id_idxs.append(i)
-            else:
-                if random.random() < 0.2:
-                    self.id_idxs.append(i)
+        # self.id_idxs = []
+        # for i, (_, label) in enumerate(self.trainset):
+        #     if label in self.classes:
+        #         if random.random() < 0.8:
+        #             self.id_idxs.append(i)
+        #     else:
+        #         if random.random() < 0.2:
+        #             self.id_idxs.append(i)
 
 
     def get_parameters(self) -> ParametersRes:
@@ -137,9 +137,8 @@ class CifarClient(fl.client.Client):
             kwargs = {"drop_last": True}
 
         # Train model
-
         trainloader = torch.utils.data.DataLoader(
-            DatasetSplit(self.trainset, self.id_idxs), batch_size=batch_size, shuffle=True, **kwargs
+            self.trainset, batch_size=batch_size, shuffle=True, **kwargs
         )
         utils.train(self.model, trainloader, lr=lr, epochs=epochs, optimizer_n=optimizer_name, device=DEVICE)
 
@@ -164,7 +163,7 @@ class CifarClient(fl.client.Client):
         testloader = torch.utils.data.DataLoader(
             self.testset, batch_size=32, shuffle=False
         )
-        loss, accuracy = utils.test(self.model, testloader, device=DEVICE)
+        loss, accuracy = utils.test(self.model, self.testset, testloader, device=DEVICE)
 
         # Return the number of evaluation examples and the evaluation result (loss)
         metrics = {"accuracy": float(accuracy)}
@@ -198,8 +197,8 @@ def main() -> None:
     parser.add_argument(
         "--model",
         type=str,
-        default="ResNet18",
-        choices=["Net", "ResNet18","ResNet8"],
+        default="resnet",
+        choices=["resnet", "mobilenet"],
         help="model to train",
     )
     # arguments for self.classes (default: [0,1]) list
@@ -220,7 +219,7 @@ def main() -> None:
     model = utils.load_model(args.model)
     model.to(DEVICE)
     # load (local, on-device) dataset
-    trainset, testset = utils.load_cifar()
+    trainset, testset = utils.load_coco()
 
     # Start client
     client = CifarClient(args.cid, model, trainset, testset, args.classes)
