@@ -49,7 +49,7 @@ def load_model(model_name: str) -> nn.Module:
 
 
 # pylint: disable=unused-argument
-def load_coco(download=False) -> Tuple[datasets.CIFAR10, datasets.CIFAR10]:
+def load_coco(download=False) -> Tuple[datasets.CocoDetection, datasets.CocoDetection]:
     """Load CIFAR-10 (training and test set)."""
     transform = transforms.Compose(
         [
