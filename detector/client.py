@@ -25,11 +25,17 @@ import numpy as np
 import torch
 import torchvision
 from flwr.common import EvaluateIns, EvaluateRes, FitIns, FitRes, ParametersRes, Weights
+import copy
 
 from torch.utils.data import Dataset
 import random
 
 import utils
+
+def get_intermediate_features(module, input, output):
+    return output
+
+
 
 
 class DatasetSplit(Dataset):
@@ -121,6 +127,7 @@ class CifarClient(fl.client.Client):
         lr = float(config["lr"])
         batch_size = int(config["batch_size"])
         optimizer_name = config["optimizer"]
+        algorithm = config["algorithm"]
         pin_memory = bool(config["pin_memory"])
         num_workers = int(config["num_workers"])
 
@@ -140,7 +147,7 @@ class CifarClient(fl.client.Client):
         trainloader = torch.utils.data.DataLoader(
             self.trainset, batch_size=batch_size, shuffle=True,  collate_fn=lambda x: tuple(zip(*x)), **kwargs
         )
-        utils.train(self.model, trainloader, lr=lr, epochs=epochs, optimizer_n=optimizer_name, device=DEVICE)
+        utils.train(self.model, trainloader, lr=lr, epochs=epochs, optimizer_n=optimizer_name, algorithm=algorithm ,device=DEVICE)
 
         # Return the refined weights and the number of examples used for training
         weights_prime: Weights = get_weights(self.model)
