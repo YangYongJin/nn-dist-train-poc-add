@@ -61,7 +61,7 @@ def transform_voc_annotation(annotation):
 
 
 def load_model(model_name: str) -> nn.Module:
-    if model_name == "mobile":
+    if model_name == "mobilenet":
         model = fasterrcnn_mobilenet_v3_large_fpn()
         num_classes = 21  # 20 classes + background
         in_features = model.roi_heads.box_predictor.cls_score.in_features
