@@ -62,13 +62,13 @@ def transform_voc_annotation(annotation):
 
 def load_model(model_name: str) -> nn.Module:
     if model_name == "mobilenet":
-        model = fasterrcnn_mobilenet_v3_large_fpn()
+        model = fasterrcnn_mobilenet_v3_large_fpn(pretrained=True)
         num_classes = 21  # 20 classes + background
         in_features = model.roi_heads.box_predictor.cls_score.in_features
         model.roi_heads.box_predictor = models.detection.faster_rcnn.FastRCNNPredictor(in_features, num_classes)
         return model
     elif model_name == "resnet":
-        model = fasterrcnn_resnet50_fpn_v2()
+        model = fasterrcnn_resnet50_fpn_v2(pretrained=True)
         num_classes = 21  # 20 classes + background
         in_features = model.roi_heads.box_predictor.cls_score.in_features
         model.roi_heads.box_predictor = models.detection.faster_rcnn.FastRCNNPredictor(in_features, num_classes)
