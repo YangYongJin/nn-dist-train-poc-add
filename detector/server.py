@@ -153,7 +153,7 @@ def main() -> None:
     fl.common.logger.configure(identifier=f"Feddetector_{args.random_seed}", filename=os.path.join(args.log_host, f"seed_{args.random_seed}.log"))
 
     # Load evaluation data
-    _, testset = utils.load_coco(download=True)
+    _, testset = utils.load_pascal(download=True)
 
     # Create client_manager, strategy, and server
     client_manager = fl.server.SimpleClientManager()
@@ -221,7 +221,7 @@ def get_eval_fn(
         set_weights(model, weights)
         model.to(DEVICE)
 
-        testloader = torch.utils.data.DataLoader(testset, batch_size=32, shuffle=False)
+        testloader = torch.utils.data.DataLoader(testset, batch_size=32, shuffle=False, collate_fn=lambda x: tuple(zip(*x)))
         mAP_at_05 = utils.test(model, testset, testloader, device=DEVICE)
 
         # log this accuracy
