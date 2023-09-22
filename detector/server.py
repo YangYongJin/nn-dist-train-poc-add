@@ -28,6 +28,7 @@ import utils
 import time
 import os
 import wandb
+from torch.utils.data import DataLoader, Subset
 
 torch.backends.cudnn.deterministic=True
 torch.backends.cudnn.benchmark=False
@@ -221,7 +222,17 @@ def get_eval_fn(
         set_weights(model, weights)
         model.to(DEVICE)
 
-        testloader = torch.utils.data.DataLoader(testset, batch_size=32, shuffle=False, collate_fn=lambda x: tuple(zip(*x)))
+        # Determine the number of samples for 10% of the dataset
+        num_samples = len(testset)
+        subset_size = int(0.01 * num_samples)
+
+        # Generate random indices for the samples
+        indices = np.random.choice(num_samples, subset_size, replace=False)
+
+        # Create the subset
+        subset = Subset(testset, indices)
+
+        testloader = DataLoader(subset, batch_size=32, shuffle=False, collate_fn=lambda x: tuple(zip(*x)))
         mAP_at_05 = utils.test(model, testset, testloader, device=DEVICE)
 
         # log this accuracy

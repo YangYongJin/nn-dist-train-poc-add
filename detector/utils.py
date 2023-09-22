@@ -34,6 +34,7 @@ import torchvision.transforms as T
 from torchvision.datasets import VOCDetection
 import torchvision.models as models
 from collections import defaultdict
+from sklearn.metrics import average_precision_score
 
 
 # Set the root directory of PASCAL VOC dataset
@@ -45,16 +46,33 @@ DATA_ROOT = Path("./data")
 __all__ = ['resnet']
 
 
+VOC_CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
+
+
+def transform_voc_annotation(annotation):
+    boxes = []
+    labels = []
+    for obj in annotation['annotation']['object']:
+        bbox = obj['bndbox']
+        boxes.append([int(bbox['xmin']), int(bbox['ymin']), int(bbox['xmax']), int(bbox['ymax'])])
+        labels.append(VOC_CLASSES.index(obj['name']))
+    return {'boxes': torch.tensor(boxes, dtype=torch.float32), 'labels': torch.tensor(labels, dtype=torch.int64)}
+
+
 
 def load_model(model_name: str) -> nn.Module:
     if model_name == "mobile":
-        return fasterrcnn_mobilenet_v3_large_fpn()
+        model = fasterrcnn_mobilenet_v3_large_fpn()
+        num_classes = 21  # 20 classes + background
+        in_features = model.roi_heads.box_predictor.cls_score.in_features
+        model.roi_heads.box_predictor = models.detection.faster_rcnn.FastRCNNPredictor(in_features, num_classes)
+        return model
     elif model_name == "resnet":
         model = fasterrcnn_resnet50_fpn_v2()
         num_classes = 21  # 20 classes + background
         in_features = model.roi_heads.box_predictor.cls_score.in_features
         model.roi_heads.box_predictor = models.detection.faster_rcnn.FastRCNNPredictor(in_features, num_classes)
-        return fasterrcnn_resnet50_fpn_v2()
+        return model
     else:
         raise NotImplementedError(f"model {model_name} is not implemented")
 
@@ -110,7 +128,8 @@ def train(
     for epoch in range(epochs):  # loop over the dataset multiple times
         running_loss = 0.0
         for i, (images, targets) in enumerate(trainloader, 0):
-            images = list(img.to(device) for img in images)
+            images = [img.to(device) for img in images]
+            targets = [transform_voc_annotation(anno) for anno in targets]
             targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
             loss_dict = net(images, targets)
@@ -139,16 +158,66 @@ def test(
     device: torch.device,  # pylint: disable=no-member
 ) -> Tuple[float, float]:
     """Validate the network on the entire test set."""
+    # Placeholder for predictions and ground truths
+    all_predictions = []
+    all_gts = []
+
+    # Get model predictions and ground truths
     net.eval()
-    predictions = []
     with torch.no_grad():
-        for images, targets in testloader:
+        for images, annotations in testloader:
             images = [img.to(device) for img in images]
-            output = net(images)
-            predictions.extend(output)
-    
-    
-    return compute_mAP(testset, predictions)
+            predictions = net(images)
+
+            # Append to placeholder lists
+            all_predictions.extend(predictions)
+            all_gts.extend(annotations)
+
+    # Calculate mAP
+    aps = []
+
+    for class_idx, class_name in enumerate(VOC_CLASSES[1:]):  # Starting from 1 to skip background class
+        y_true = []
+        y_scores = []
+        for i in range(len(all_gts)):
+            gt_boxes = [box['bndbox'] for box in all_gts[i]['annotation']['object'] if VOC_CLASSES.index(box['name']) == class_idx]
+            pred_boxes = all_predictions[i]['boxes'][all_predictions[i]['labels'] == class_idx].tolist()
+            scores = all_predictions[i]['scores'][all_predictions[i]['labels'] == class_idx].tolist()
+
+            for pb, score in zip(pred_boxes, scores):
+                matched = False
+                for gb in gt_boxes:
+                    iou = compute_iou(pb, [int(gb['xmin']), int(gb['ymin']), int(gb['xmax']), int(gb['ymax'])])
+                    if iou > 0.5:
+                        matched = True
+                        break
+                y_true.append(int(matched))
+                y_scores.append(score)
+
+        if y_scores:
+            ap = average_precision_score(y_true, y_scores)
+            aps.append(ap)
+
+    mAP = sum(aps) / len(aps)
+    return mAP
+
+def compute_iou(boxA, boxB):
+    # Determine the coordinates of the intersection rectangle
+    xA = max(boxA[0], boxB[0])
+    yA = max(boxA[1], boxB[1])
+    xB = min(boxA[2], boxB[2])
+    yB = min(boxA[3], boxB[3])
+
+    # Compute area of intersection
+    inter_area = max(0, xB - xA + 1) * max(0, yB - yA + 1)
+
+    # Compute area of both boxes
+    boxA_area = (boxA[2] - boxA[0] + 1) * (boxA[3] - boxA[1] + 1)
+    boxB_area = (boxB[2] - boxB[0] + 1) * (boxB[3] - boxB[1] + 1)
+
+    # Compute IoU
+    iou = inter_area / float(boxA_area + boxB_area - inter_area)
+    return iou
 
 
 def compute_mAP(gt, preds):
