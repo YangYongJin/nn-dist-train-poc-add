@@ -219,7 +219,7 @@ def main() -> None:
     model = utils.load_model(args.model)
     model.to(DEVICE)
     # load (local, on-device) dataset
-    trainset, testset = utils.load_pascal()
+    trainset, testset = utils.load_pascal(download=True)
 
     # Start client
     client = CifarClient(args.cid, model, trainset, testset, args.classes)
