@@ -71,10 +71,10 @@ def load_pascal(download=False) -> Tuple[datasets.CocoDetection, datasets.CocoDe
     )
     voc_root = "./data/VOC2007/"
     # Training dataset
-    trainset = VOCDetection(root=voc_root, year='2007', image_set='train', transform=transform)
+    trainset = VOCDetection(root=voc_root, year='2007', image_set='train', download=download, transform=transform)
 
     # Testing/validation dataset
-    testset = VOCDetection(root=voc_root, year='2007', image_set='test', transform=transform)
+    testset = VOCDetection(root=voc_root, year='2007', image_set='test', download=download, transform=transform)
     return trainset, testset
 
 
