@@ -31,6 +31,13 @@ from torchvision import datasets
 from torchvision.models.detection import fasterrcnn_resnet50_fpn_v2,fasterrcnn_mobilenet_v3_large_fpn
 from torchvision.datasets import CocoDetection
 import torchvision.transforms as T
+from torchvision.datasets import VOCDetection
+import torchvision.models as models
+from collections import defaultdict
+
+
+# Set the root directory of PASCAL VOC dataset
+voc_root = "./data/VOCdevkit/VOC2007"  # Adjust to your path
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 DATA_ROOT = Path("./data")
@@ -43,13 +50,17 @@ def load_model(model_name: str) -> nn.Module:
     if model_name == "mobile":
         return fasterrcnn_mobilenet_v3_large_fpn()
     elif model_name == "resnet":
+        model = fasterrcnn_resnet50_fpn_v2()
+        num_classes = 21  # 20 classes + background
+        in_features = model.roi_heads.box_predictor.cls_score.in_features
+        model.roi_heads.box_predictor = models.detection.faster_rcnn.FastRCNNPredictor(in_features, num_classes)
         return fasterrcnn_resnet50_fpn_v2()
     else:
         raise NotImplementedError(f"model {model_name} is not implemented")
 
 
 # pylint: disable=unused-argument
-def load_coco(download=False) -> Tuple[datasets.CocoDetection, datasets.CocoDetection]:
+def load_pascal(download=False) -> Tuple[datasets.CocoDetection, datasets.CocoDetection]:
     """Load CIFAR-10 (training and test set)."""
     transform = transforms.Compose(
         [
@@ -58,15 +69,12 @@ def load_coco(download=False) -> Tuple[datasets.CocoDetection, datasets.CocoDete
             (0.229, 0.224, 0.225)),
         ]
     )
+    voc_root = "./data/VOC2007/"
     # Training dataset
-    trainset = CocoDetection(root="./data/COCO/train2017",
-                            annFile="./data/COCO/annotations/instances_train2017.json",
-                            transform=transform)
+    trainset = VOCDetection(root=voc_root, year='2007', image_set='train', transform=transform)
 
     # Testing/validation dataset
-    testset = CocoDetection(root="./data/COCO/val2017",
-                            annFile="./data/COCO/annotations/instances_val2017.json",
-                            transform=transform)
+    testset = VOCDetection(root=voc_root, year='2007', image_set='test', transform=transform)
     return trainset, testset
 
 
@@ -132,38 +140,62 @@ def test(
 ) -> Tuple[float, float]:
     """Validate the network on the entire test set."""
     net.eval()
-    results = []
-
-    with torch.no_grad():  # Disables gradient computation
-        for images, _ in testloader:  # We don't need ground truth for prediction
-            images = list(img.to(device) for img in images)
-            predictions = net(images)
-            results.extend(predictions)
+    predictions = []
+    with torch.no_grad():
+        for images, targets in testloader:
+            images = [img.to(device) for img in images]
+            output = net(images)
+            predictions.extend(output)
     
-    coco_results = []
-    for image_id, prediction in enumerate(results):
-        image_info = testset.coco.imgs[testset.ids[image_id]]
-        for bbox, score, label in zip(prediction["boxes"], prediction["scores"], prediction["labels"]):
-            x, y, width, height = bbox
-            result = {
-                "image_id": image_info["id"],
-                "category_id": label.item(),
-                "bbox": [x.item(), y.item(), (width - x).item(), (height - y).item()],
-                "score": score.item()
-            }
-            coco_results.append(result)
-
-
-    coco_gt = COCO("./data/COCO/annotations/instances_val2017.json")
-    coco_dt = coco_gt.loadRes(coco_results)
-
-    coco_eval = COCOeval(coco_gt, coco_dt, "bbox")
-    coco_eval.evaluate()
-    coco_eval.accumulate()
-    # This is the line that extracts mAP@0.5 from the COCOeval object
-    mAP_at_05 = coco_eval.stats[1]
     
-    return mAP_at_05
+    return compute_mAP(testset, predictions)
+
+
+def compute_mAP(gt, preds):
+    APs = []
+    for class_id in range(len(gt.classes) - 1):  # Exclude the background class
+        detections = []
+        ground_truths = []
+
+        # Gather all detections and ground truths for this class
+        for i, prediction in enumerate(preds):
+            if len(prediction["labels"]) > 0:
+                for p, label in zip(prediction["scores"], prediction["labels"]):
+                    if label == class_id:
+                        detections.append((i, p))
+                
+            gt_boxes = gt[i]['annotation']['bbox']
+            for box in gt_boxes:
+                if box['label'] == class_id:
+                    ground_truths.append(i)
+
+        # Sort detections by score
+        detections.sort(key=lambda x: x[1], reverse=True)
+        
+        TP = torch.zeros(len(detections))
+        FP = torch.zeros(len(detections))
+        total_gt = len(ground_truths)
+
+        for i, detection in enumerate(detections):
+            img_id, _ = detection
+            if img_id in ground_truths:
+                TP[i] = 1
+                ground_truths.remove(img_id)
+            else:
+                FP[i] = 1
+
+        TP_cumsum = torch.cumsum(TP, dim=0)
+        FP_cumsum = torch.cumsum(FP, dim=0)
+        recalls = TP_cumsum / (total_gt + 1e-10)
+        precisions = TP_cumsum / (TP_cumsum + FP_cumsum + 1e-10)
+        recalls = torch.cat((torch.tensor([0]), recalls))
+        precisions = torch.cat((torch.tensor([1]), precisions))
+        
+        # Compute average precision using the trapz rule
+        AP = -torch.trapz(precisions, recalls)
+        APs.append(AP)
+
+    return torch.mean(torch.stack(APs))
 
     
     

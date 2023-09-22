@@ -138,7 +138,7 @@ class CifarClient(fl.client.Client):
 
         # Train model
         trainloader = torch.utils.data.DataLoader(
-            self.trainset, batch_size=batch_size, shuffle=True, **kwargs
+            self.trainset, batch_size=batch_size, shuffle=True,  collate_fn=lambda x: tuple(zip(*x)), **kwargs
         )
         utils.train(self.model, trainloader, lr=lr, epochs=epochs, optimizer_n=optimizer_name, device=DEVICE)
 
@@ -161,7 +161,7 @@ class CifarClient(fl.client.Client):
 
         # Evaluate the updated model on the local dataset
         testloader = torch.utils.data.DataLoader(
-            self.testset, batch_size=32, shuffle=False
+            self.testset, batch_size=32, shuffle=False, collate_fn=lambda x: tuple(zip(*x))
         )
         loss, accuracy = utils.test(self.model, self.testset, testloader, device=DEVICE)
 
@@ -219,7 +219,7 @@ def main() -> None:
     model = utils.load_model(args.model)
     model.to(DEVICE)
     # load (local, on-device) dataset
-    trainset, testset = utils.load_coco()
+    trainset, testset = utils.load_pascal()
 
     # Start client
     client = CifarClient(args.cid, model, trainset, testset, args.classes)
