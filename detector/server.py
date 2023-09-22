@@ -232,7 +232,7 @@ def get_eval_fn(
         # Create the subset
         subset = Subset(testset, indices)
 
-        testloader = DataLoader(subset, batch_size=32, shuffle=False, collate_fn=lambda x: tuple(zip(*x)))
+        testloader = DataLoader(subset, batch_size=4, shuffle=False, collate_fn=lambda x: tuple(zip(*x)))
         mAP_at_05 = utils.test(model, testset, testloader, device=DEVICE)
 
         # log this accuracy
@@ -250,7 +250,7 @@ def get_eval_fn(
             )
         wandb.log({"best_mAP_at_05": mAP_at_05})
 
-        return {"mAP_at_05": mAP_at_05}
+        return (0.0, {"mAP_at_05": mAP_at_05})
 
     return evaluate
 

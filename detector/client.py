@@ -161,7 +161,7 @@ class CifarClient(fl.client.Client):
 
         # Evaluate the updated model on the local dataset
         testloader = torch.utils.data.DataLoader(
-            self.testset, batch_size=32, shuffle=False, collate_fn=lambda x: tuple(zip(*x))
+            self.testset, batch_size=4, shuffle=False, collate_fn=lambda x: tuple(zip(*x))
         )
         loss, accuracy = utils.test(self.model, self.testset, testloader, device=DEVICE)
 
