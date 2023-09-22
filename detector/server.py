@@ -119,6 +119,14 @@ parser.add_argument(
     choices=["SGD", "Adam", "RMSprop", "SGDM"],
     help="optimizer to use",
 )
+parser.add_argument(
+    "--algorithm",
+    type=str,
+    default="fedavg",
+    choices=["fedavg", "fedntd"],
+    help="optimizer to use",
+)
+
 
 parser.add_argument(
     "--num_workers",
@@ -191,6 +199,7 @@ def fit_config(server_round: int) -> Dict[str, fl.common.Scalar]:
         "epoch_global": str(server_round),
         "epochs": str(args.epochs),
         "lr": str(args.lr),
+        "algorithm": str(args.algorithm),
         "batch_size": str(args.batch_size),
         "num_workers": str(args.num_workers),
         "pin_memory": str(args.pin_memory),
