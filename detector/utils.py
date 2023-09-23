@@ -40,20 +40,13 @@ from sklearn.metrics import average_precision_score
 
 # Set the root directory of PASCAL VOC dataset
 voc_root = "./data/VOCdevkit/VOC2007"  # Adjust to your path
-from pycocotools.coco import COCO
-from pycocotools.cocoeval import COCOeval
+
 DATA_ROOT = Path("./data")
 
 __all__ = ['resnet']
 
 
 VOC_CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
-
-features_student = []
-features_teacher = []
-
-def get_intermediate_features(module, input, output):
-    return output
 
 
 def transform_voc_annotation(annotation):
@@ -114,13 +107,6 @@ def train(
 ) -> None:
     """Train the network."""
 
-    if algorithm == 'fedntd':
-        teacher_model = copy.deepcopy(net).to(device)
-        teacher_model.eval()
-        hook_student = net.backbone.body.layer3.register_forward_hook(lambda module, input, output: features_student.append(get_intermediate_features(module, input, output)))
-        hook_teacher = teacher_model.backbone.body.layer3.register_forward_hook(lambda module, input, output: features_teacher.append(get_intermediate_features(module, input, output)))
-        KLDiv = nn.KLDivLoss(reduction="batchmean")
-
     net.train()
 
     # Define loss and optimizer
@@ -150,14 +136,6 @@ def train(
             loss_dict = net(images, targets)
             losses = sum(loss for loss in loss_dict.values())
 
-            if algorithm == 'fedntd':
-                # Get teacher features (No gradient required)
-                with torch.no_grad():
-                    teacher_out = teacher_model(images)
-                # Compute distillation loss
-                distillation_loss =  KLDiv(features_student[-1], features_teacher[-1])
-                losses += 0.1*distillation_loss
-
             # zero the parameter gradients
             optimizer.zero_grad()
 
@@ -165,21 +143,12 @@ def train(
             losses.backward()
             optimizer.step()
 
-            if algorithm == 'fedntd':
-                # Clear feature lists for next iteration
-                features_student.clear()
-                features_teacher.clear()
-
             # print statistics
             running_loss += losses.item()
             if i % 50 == 49:  # print every 2000 mini-batches
                 print("[%d, %5d] loss: %.3f" % (epoch + 1, i + 1, running_loss / 50))
                 running_loss = 0.0
-    
-    # Cleanup hooks
-    if algorithm == 'fedntd':
-        hook_student.remove()
-        hook_teacher.remove()
+                
     print(f"Epoch took: {time() - t:.2f} seconds")
 
 

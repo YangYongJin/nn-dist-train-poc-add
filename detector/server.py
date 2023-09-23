@@ -123,7 +123,7 @@ parser.add_argument(
     "--algorithm",
     type=str,
     default="fedavg",
-    choices=["fedavg", "fedntd"],
+    choices=["fedavg", "fedprox", "fedadam", "fedyogi"],
     help="optimizer to use",
 )
 
@@ -166,7 +166,17 @@ def main() -> None:
 
     # Create client_manager, strategy, and server
     client_manager = fl.server.SimpleClientManager()
-    strategy = fl.server.strategy.FedAvg(
+
+    if args.algorithm == "fedavg":
+        strategy = fl.server.strategy.FedAvg(
+        fraction_fit=args.sample_fraction,
+        min_fit_clients=args.min_sample_size,
+        min_available_clients=args.min_num_clients,
+        eval_fn=get_eval_fn(testset),
+        on_fit_config_fn=fit_config,
+    )
+    elif args.algorithm == "fedprox":
+        strategy = fl.server.strategy.FedProx(
         fraction_fit=args.sample_fraction,
         min_fit_clients=args.min_sample_size,
         min_available_clients=args.min_num_clients,

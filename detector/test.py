@@ -62,21 +62,25 @@ transform = transforms.Compose(
     )
 voc_test = VOCDetection(root='./data', year='2007', image_set='train', download=True, transform=transform)
 
-testloader = torch.utils.data.DataLoader(voc_test, batch_size=32, shuffle=True, collate_fn=lambda x: tuple(zip(*x)))
+testloader = torch.utils.data.DataLoader(voc_test, batch_size=3, shuffle=True, collate_fn=lambda x: tuple(zip(*x)))
 print(len(voc_test))
 
-# model.train()
-# predictions = []
-# with torch.no_grad():
-#     for images, targets in testloader:
-#         images = [img.to(device) for img in images]
-#         targets = [transform_voc_annotation(anno) for anno in targets]
-#         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-
-#         loss_dict = model(images, targets)
-#         print(loss_dict)
-#         losses = sum(loss for loss in loss_dict.values())
-#         print(losses)
+model.train()
+predictions = []
+with torch.no_grad():
+    for images, targets in testloader:
+        images = [img.to(device) for img in images]
+        targets = [transform_voc_annotation(anno) for anno in targets]
+        targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
+        print(targets)
+        1/0
+        loss_dict = model(images)
+        print(loss_dict[0]['scores'].shape)
+        print(loss_dict[0]['scores'].shape)
+        print(loss_dict)
+        1/0
+        losses = sum(loss for loss in loss_dict.values())
+        print(losses)
 
 
 all_predictions = []

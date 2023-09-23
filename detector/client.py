@@ -32,10 +32,6 @@ import random
 
 import utils
 
-def get_intermediate_features(module, input, output):
-    return output
-
-
 
 
 class DatasetSplit(Dataset):
