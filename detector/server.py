@@ -183,6 +183,24 @@ def main() -> None:
         eval_fn=get_eval_fn(testset),
         on_fit_config_fn=fit_config,
     )
+    elif args.algorithm == "fedadam":
+        strategy = fl.server.strategy.FedAdam(
+        fraction_fit=args.sample_fraction,
+        min_fit_clients=args.min_sample_size,
+        min_available_clients=args.min_num_clients,
+        eval_fn=get_eval_fn(testset),
+        on_fit_config_fn=fit_config,
+    )
+    elif args.algorithm == "fedyogi":
+        strategy = fl.server.strategy.FedYogi(
+        fraction_fit=args.sample_fraction,
+        min_fit_clients=args.min_sample_size,
+        min_available_clients=args.min_num_clients,
+        eval_fn=get_eval_fn(testset),
+        on_fit_config_fn=fit_config,
+    )
+    else: 
+        raise NotImplementedError(f"algorithm {args.algorithm} is not implemented")
     server = fl.server.Server(client_manager=client_manager, strategy=strategy)
 
     # Start timer
