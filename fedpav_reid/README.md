@@ -15,7 +15,7 @@ We provide two docker images: one built for Jetson devices and make use of their
 
 ```bash
 # launch your server. It will be waiting until one client connects
-$ python server.py --server_address <YOUR_SERVER_IP:PORT> --rounds 3 --min_num_clients 1 --min_sample_size 1 --model ResNet18
+$ python3 server.py --server_address <YOUR_SERVER_IP:PORT> --rounds 3 --min_num_clients 1 --min_sample_size 1 --model ResNet18
 ```
 
 ## Clients
