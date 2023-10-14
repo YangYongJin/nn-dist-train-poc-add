@@ -23,3 +23,6 @@ $ python server.py --server_address <YOUR_SERVER_IP:PORT> --rounds 3 --min_num_c
 ```bash
 $ ./run_jetson.sh --server_address=SERVER_ADDRESS:8080 --cid=0 --model=ResNet18 --batch_size=10
 ```
+
+![image](https://github.com/etri-edgeai/nn-dist-train-poc/assets/58346392/c30bf76c-3464-4e1d-aac8-f7a455175f9a)
+
