@@ -162,10 +162,15 @@ def main() -> None:
     fl.common.logger.configure(identifier=f"Feddetector_{args.random_seed}", filename=os.path.join(args.log_host, f"seed_{args.random_seed}.log"))
 
     # Load evaluation data
-    _, testset = utils.load_pascal(download=True)
+    testset = utils.load_smartfarm_data()
 
     # Create client_manager, strategy, and server
     client_manager = fl.server.SimpleClientManager()
+
+    model = utils.load_model(args.model)
+    weights = [val.cpu().numpy() for _, val in model.state_dict().items()]
+    parameters = fl.common.weights_to_parameters(weights)
+    parameters = fl.common.ParametersRes(parameters=parameters)
 
     if args.algorithm == "fedavg":
         strategy = fl.server.strategy.FedAvg(
@@ -190,6 +195,11 @@ def main() -> None:
         min_available_clients=args.min_num_clients,
         eval_fn=get_eval_fn(testset),
         on_fit_config_fn=fit_config,
+        initial_parameters=parameters,
+        eta = 1e-2,
+        eta_l = 1e-3,
+        beta_1 = 0.9,
+        beta_2 = 0.99,
     )
     elif args.algorithm == "fedyogi":
         strategy = fl.server.strategy.FedYogi(
@@ -198,6 +208,11 @@ def main() -> None:
         min_available_clients=args.min_num_clients,
         eval_fn=get_eval_fn(testset),
         on_fit_config_fn=fit_config,
+        initial_parameters=parameters,
+        eta = 1e-2,
+        eta_l = 1e-3,
+        beta_1 = 0.9,
+        beta_2 = 0.99,
     )
     else: 
         raise NotImplementedError(f"algorithm {args.algorithm} is not implemented")

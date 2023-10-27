@@ -29,24 +29,27 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 from torch import Tensor
 from torchvision import datasets
-from torchvision.models.detection import fasterrcnn_resnet50_fpn_v2,fasterrcnn_mobilenet_v3_large_fpn
+from torchvision.models.detection import fasterrcnn_resnet50_fpn_v2,fasterrcnn_mobilenet_v3_large_fpn, FasterRCNN_ResNet50_FPN_V2_Weights
 from torchvision.datasets import CocoDetection
 import torchvision.transforms as T
 from torchvision.datasets import VOCDetection
 import torchvision.models as models
 from collections import defaultdict
 from sklearn.metrics import average_precision_score
+import json
+import os
+from PIL import Image
 
 
 # Set the root directory of PASCAL VOC dataset
 voc_root = "./data/VOCdevkit/VOC2007"  # Adjust to your path
+farm_root = "./data/SmartFarm"  # Adjust to your path
 
 DATA_ROOT = Path("./data")
 
-__all__ = ['resnet']
-
 
 VOC_CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
+CLASSES = ["normalZ", "aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
 
 
 def transform_voc_annotation(annotation):
@@ -58,6 +61,48 @@ def transform_voc_annotation(annotation):
         labels.append(VOC_CLASSES.index(obj['name']))
     return {'boxes': torch.tensor(boxes, dtype=torch.float32), 'labels': torch.tensor(labels, dtype=torch.int64)}
 
+# Modify this function to extract bounding boxes and classes from the custom JSON format - custom annotation
+def transform_smartfarm_annotation(annotation):
+    boxes = []
+    labels = []
+
+    for obj in annotation['annotations']['object']:
+        for points in obj['points']:
+            boxes.append([points['xtl'], points['ytl'], points['xbr'], points['ybr']])
+            labels.append(obj['class'])
+
+    return {'boxes': torch.tensor(boxes, dtype=torch.float32), 'labels': torch.tensor(labels, dtype=torch.int64)}
+
+# Dummy CustomDataset to load data from your JSON format
+# You might need to further modify it to suit your directory structure and file naming
+class SmartFarmDataset(torch.utils.data.Dataset):
+    def __init__(self, root_folder, transform=None):
+        
+        self.images_folder = os.path.join(root_folder, 'images')
+        self.labels_folder = os.path.join(root_folder, 'labels')
+        self.transform = transform
+
+        # List all JSON files in the labels directory
+        self.label_files = [f for f in os.listdir(self.labels_folder) if f.endswith('.json')]
+    
+    def __len__(self):
+        return len(self.label_files)
+    
+    def __getitem__(self, idx):
+        # Load the JSON file for this index
+        with open(os.path.join(self.labels_folder, self.label_files[idx]), 'r') as f:
+            item = json.load(f)
+        
+        # Fetch the corresponding image from the images directory
+        image_path = os.path.join(self.images_folder, item['description']['image'])
+        image = Image.open(image_path).convert("RGB")
+        
+        if self.transform:
+            image = self.transform(image)
+            
+        target = item#transform_smartfarm_annotation(item)
+        return image, target
+
 
 
 def load_model(model_name: str) -> nn.Module:
@@ -68,7 +113,7 @@ def load_model(model_name: str) -> nn.Module:
         model.roi_heads.box_predictor = models.detection.faster_rcnn.FastRCNNPredictor(in_features, num_classes)
         return model
     elif model_name == "resnet":
-        model = fasterrcnn_resnet50_fpn_v2(pretrained=True)
+        model = fasterrcnn_resnet50_fpn_v2(weights=FasterRCNN_ResNet50_FPN_V2_Weights.DEFAULT)
         num_classes = 21  # 20 classes + background
         in_features = model.roi_heads.box_predictor.cls_score.in_features
         model.roi_heads.box_predictor = models.detection.faster_rcnn.FastRCNNPredictor(in_features, num_classes)
@@ -79,7 +124,6 @@ def load_model(model_name: str) -> nn.Module:
 
 # pylint: disable=unused-argument
 def load_pascal(download=False) -> Tuple[datasets.CocoDetection, datasets.CocoDetection]:
-    """Load CIFAR-10 (training and test set)."""
     transform = transforms.Compose(
         [
             transforms.ToTensor(),
@@ -94,6 +138,18 @@ def load_pascal(download=False) -> Tuple[datasets.CocoDetection, datasets.CocoDe
     # Testing/validation dataset
     testset = VOCDetection(root=voc_root, year='2007', image_set='test', download=download, transform=transform)
     return trainset, testset
+
+# Modify loading function to use CustomDataset
+def load_smartfarm_data():
+    transform = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize((0.485, 0.456, 0.406),
+            (0.229, 0.224, 0.225)),
+        ]
+    )
+    dataset = SmartFarmDataset(farm_root, transform=transform)
+    return dataset  # For simplicity, returning just one dataset, split into train/test as needed
 
 
 def train(
@@ -128,7 +184,7 @@ def train(
         running_loss = 0.0
         for i, (images, targets) in enumerate(trainloader, 0):
             images = [img.to(device) for img in images]
-            targets = [transform_voc_annotation(anno) for anno in targets]
+            targets = [transform_smartfarm_annotation(anno) for anno in targets]
             targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
 
@@ -154,10 +210,10 @@ def train(
 
 def test(
     net: nn.Module,
-    testset: datasets,
+    testset,
     testloader: torch.utils.data.DataLoader,
-    device: torch.device,  # pylint: disable=no-member
-) -> Tuple[float, float]:
+    device: torch.device
+) -> float:
     """Validate the network on the entire test set."""
     # Placeholder for predictions and ground truths
     all_predictions = []
@@ -177,18 +233,19 @@ def test(
     # Calculate mAP
     aps = []
 
-    for class_idx, class_name in enumerate(VOC_CLASSES[1:]):  # Starting from 1 to skip background class
+    # Assuming you have some predefined CLASSES constant
+    for class_idx, class_name in enumerate(CLASSES):
         y_true = []
         y_scores = []
         for i in range(len(all_gts)):
-            gt_boxes = [box['bndbox'] for box in all_gts[i]['annotation']['object'] if VOC_CLASSES.index(box['name']) == class_idx]
+            gt_boxes = [box for obj in all_gts[i]['annotations']['object'] if obj['class'] == class_idx for box in obj['points']]
             pred_boxes = all_predictions[i]['boxes'][all_predictions[i]['labels'] == class_idx].tolist()
             scores = all_predictions[i]['scores'][all_predictions[i]['labels'] == class_idx].tolist()
 
             for pb, score in zip(pred_boxes, scores):
                 matched = False
                 for gb in gt_boxes:
-                    iou = compute_iou(pb, [int(gb['xmin']), int(gb['ymin']), int(gb['xmax']), int(gb['ymax'])])
+                    iou = compute_iou(pb, [gb['xtl'], gb['ytl'], gb['xbr'], gb['ybr']])
                     if iou > 0.5:
                         matched = True
                         break
@@ -199,7 +256,7 @@ def test(
             ap = average_precision_score(y_true, y_scores)
             aps.append(ap)
 
-    mAP = sum(aps) / len(aps)
+    mAP = sum(aps) / len(aps) if aps else 0  # Handling cases where aps might be empty
     return mAP
 
 def compute_iou(boxA, boxB):
@@ -220,52 +277,6 @@ def compute_iou(boxA, boxB):
     iou = inter_area / float(boxA_area + boxB_area - inter_area)
     return iou
 
-
-def compute_mAP(gt, preds):
-    APs = []
-    for class_id in range(len(gt.classes) - 1):  # Exclude the background class
-        detections = []
-        ground_truths = []
-
-        # Gather all detections and ground truths for this class
-        for i, prediction in enumerate(preds):
-            if len(prediction["labels"]) > 0:
-                for p, label in zip(prediction["scores"], prediction["labels"]):
-                    if label == class_id:
-                        detections.append((i, p))
-                
-            gt_boxes = gt[i]['annotation']['bbox']
-            for box in gt_boxes:
-                if box['label'] == class_id:
-                    ground_truths.append(i)
-
-        # Sort detections by score
-        detections.sort(key=lambda x: x[1], reverse=True)
-        
-        TP = torch.zeros(len(detections))
-        FP = torch.zeros(len(detections))
-        total_gt = len(ground_truths)
-
-        for i, detection in enumerate(detections):
-            img_id, _ = detection
-            if img_id in ground_truths:
-                TP[i] = 1
-                ground_truths.remove(img_id)
-            else:
-                FP[i] = 1
-
-        TP_cumsum = torch.cumsum(TP, dim=0)
-        FP_cumsum = torch.cumsum(FP, dim=0)
-        recalls = TP_cumsum / (total_gt + 1e-10)
-        precisions = TP_cumsum / (TP_cumsum + FP_cumsum + 1e-10)
-        recalls = torch.cat((torch.tensor([0]), recalls))
-        precisions = torch.cat((torch.tensor([1]), precisions))
-        
-        # Compute average precision using the trapz rule
-        AP = -torch.trapz(precisions, recalls)
-        APs.append(AP)
-
-    return torch.mean(torch.stack(APs))
 
     
     
