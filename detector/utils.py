@@ -95,12 +95,26 @@ class SmartFarmDataset(torch.utils.data.Dataset):
         
         # Fetch the corresponding image from the images directory
         image_path = os.path.join(self.images_folder, item['description']['image'])
+
+        # If image_path doesn't exist, try with different extensions
+        if not os.path.exists(image_path):
+            base_path, _ = os.path.splitext(image_path)
+            found = False
+            for ext in ['jpg', 'jpeg', 'JPG']:
+                new_path = f"{base_path}.{ext}"
+                if os.path.exists(new_path):
+                    image_path = new_path
+                    found = True
+                    break
+            if not found:
+                raise ValueError(f"Image not found for {image_path} even after trying different extensions.")
+        
         image = Image.open(image_path).convert("RGB")
         
         if self.transform:
             image = self.transform(image)
             
-        target = item#transform_smartfarm_annotation(item)
+        target = item # transform_smartfarm_annotation(item)
         return image, target
 
 
