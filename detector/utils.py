@@ -49,7 +49,7 @@ DATA_ROOT = Path("./data")
 
 
 VOC_CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
-CLASSES = ["normalZ", "aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
+CLASSES = ["normal", "aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
 
 
 def transform_voc_annotation(annotation):
@@ -67,9 +67,18 @@ def transform_smartfarm_annotation(annotation):
     labels = []
 
     for obj in annotation['annotations']['object']:
+        label = obj['class']
+
+        # Check if label is outside the valid range
+        if label > 20 or label < 0:
+            continue  # Skip this object
+
         for points in obj['points']:
             boxes.append([points['xtl'], points['ytl'], points['xbr'], points['ybr']])
-            labels.append(obj['class'])
+            labels.append(label)
+
+    if not boxes or not labels:
+        return None
 
     return {'boxes': torch.tensor(boxes, dtype=torch.float32), 'labels': torch.tensor(labels, dtype=torch.int64)}
 
@@ -197,9 +206,19 @@ def train(
     for epoch in range(epochs):  # loop over the dataset multiple times
         running_loss = 0.0
         for i, (images, targets) in enumerate(trainloader, 0):
+            targets_transformed = [transform_smartfarm_annotation(anno) for anno in targets]
+        
+            # Filter out None and the corresponding images
+            valid_indices = [i for i, t in enumerate(targets_transformed) if t is not None]
+            images = [images[i] for i in valid_indices]
+            targets_transformed = [t for t in targets_transformed if t is not None]
+
+            # Skip this batch if there are no valid samples left
+            if not images or not targets_transformed:
+                continue
+
             images = [img.to(device) for img in images]
-            targets = [transform_smartfarm_annotation(anno) for anno in targets]
-            targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
+            targets_transformed = [{k: v.to(device) for k, v in t.items()} for t in targets_transformed]
 
 
 
