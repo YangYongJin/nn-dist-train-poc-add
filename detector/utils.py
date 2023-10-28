@@ -82,6 +82,25 @@ def transform_smartfarm_annotation(annotation):
 
     return {'boxes': torch.tensor(boxes, dtype=torch.float32), 'labels': torch.tensor(labels, dtype=torch.int64)}
 
+def resize_annotations_and_image(target, image: Image.Image, target_size=(512, 512)) -> Image.Image:
+    original_width, original_height = image.size
+    
+    width_scale = target_size[0] / original_width
+    height_scale = target_size[1] / original_height
+
+    # Resize the image
+    image = image.resize(target_size, Image.ANTIALIAS)
+    
+    # Resize bounding boxes in the annotations
+    for obj in target['annotations']['object']:
+        for point in obj['points']:
+            point['xtl'] = int(point['xtl'] * width_scale)
+            point['ytl'] = int(point['ytl'] * height_scale)
+            point['xbr'] = int(point['xbr'] * width_scale)
+            point['ybr'] = int(point['ybr'] * height_scale)
+
+    return image
+
 # Dummy CustomDataset to load data from your JSON format
 # You might need to further modify it to suit your directory structure and file naming
 class SmartFarmDataset(torch.utils.data.Dataset):
@@ -119,6 +138,9 @@ class SmartFarmDataset(torch.utils.data.Dataset):
                 raise ValueError(f"Image not found for {image_path} even after trying different extensions.")
         
         image = Image.open(image_path).convert("RGB")
+
+        # Resize the image and adjust annotations in the target
+        image = resize_annotations_and_image(target, image)
         
         if self.transform:
             image = self.transform(image)
@@ -222,7 +244,7 @@ def train(
 
 
 
-            loss_dict = net(images, targets)
+            loss_dict = net(images, targets_transformed)
             losses = sum(loss for loss in loss_dict.values())
 
             # zero the parameter gradients
