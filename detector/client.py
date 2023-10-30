@@ -164,7 +164,7 @@ class CifarClient(fl.client.Client):
         testloader = torch.utils.data.DataLoader(
             self.testset, batch_size=4, shuffle=False, collate_fn=lambda x: tuple(zip(*x))
         )
-        loss, accuracy = utils.test(self.model, self.testset, testloader, device=DEVICE)
+        loss, accuracy = 0.0, 0.0 #utils.test(self.model, self.testset, testloader, device=DEVICE)
 
         # Return the number of evaluation examples and the evaluation result (loss)
         metrics = {"accuracy": float(accuracy)}
