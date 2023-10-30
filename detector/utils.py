@@ -40,6 +40,8 @@ import json
 import os
 from PIL import Image
 
+Image.MAX_IMAGE_PIXELS = None
+
 
 # Set the root directory of PASCAL VOC dataset
 voc_root = "./data/VOCdevkit/VOC2007"  # Adjust to your path
@@ -140,7 +142,7 @@ class SmartFarmDataset(torch.utils.data.Dataset):
         image = Image.open(image_path).convert("RGB")
 
         # Resize the image and adjust annotations in the target
-        image = resize_annotations_and_image(target, image)
+        image = resize_annotations_and_image(item, image)
         
         if self.transform:
             image = self.transform(image)
