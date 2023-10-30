@@ -11,11 +11,11 @@ RUN apt-get install wget -y
 # Download and extract CIFAR-10
 # To keep things simple, we keep this as part of the docker image.
 # If the dataset is already in your system you can mount it instead.
-ENV DATA_DIR=/app/data/cifar-10
-RUN mkdir -p $DATA_DIR
-WORKDIR $DATA_DIR
-RUN wget https://www.cs.toronto.edu/\~kriz/cifar-10-python.tar.gz 
-RUN tar -zxvf cifar-10-python.tar.gz
+# ENV DATA_DIR=/app/data/cifar-10
+# RUN mkdir -p $DATA_DIR
+# WORKDIR $DATA_DIR
+# RUN wget https://www.cs.toronto.edu/\~kriz/cifar-10-python.tar.gz 
+# RUN tar -zxvf cifar-10-python.tar.gz
 
 WORKDIR /app
 # Scripts needed for Flower client
