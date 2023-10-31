@@ -29,7 +29,7 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 from torch import Tensor
 from torchvision import datasets
-from torchvision.models.detection import fasterrcnn_resnet50_fpn,fasterrcnn_mobilenet_v3_large_fpn
+from torchvision.models.detection import fasterrcnn_resnet50_fpn
 from torchvision.datasets import CocoDetection
 import torchvision.transforms as T
 from torchvision.datasets import VOCDetection
@@ -153,13 +153,13 @@ class SmartFarmDataset(torch.utils.data.Dataset):
 
 
 def load_model(model_name: str) -> nn.Module:
-    if model_name == "mobilenet":
-        model = fasterrcnn_mobilenet_v3_large_fpn(pretrained=True)
-        num_classes = 21  # 20 classes + background
-        in_features = model.roi_heads.box_predictor.cls_score.in_features
-        model.roi_heads.box_predictor = models.detection.faster_rcnn.FastRCNNPredictor(in_features, num_classes)
-        return model
-    elif model_name == "resnet":
+    # if model_name == "mobilenet":
+    #     model = fasterrcnn_mobilenet_v3_large_fpn(pretrained=True)
+    #     num_classes = 21  # 20 classes + background
+    #     in_features = model.roi_heads.box_predictor.cls_score.in_features
+    #     model.roi_heads.box_predictor = models.detection.faster_rcnn.FastRCNNPredictor(in_features, num_classes)
+    #     return model
+    if model_name == "resnet":
         model = fasterrcnn_resnet50_fpn(pretrained=True)
         num_classes = 21  # 20 classes + background
         in_features = model.roi_heads.box_predictor.cls_score.in_features
