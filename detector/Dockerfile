@@ -2,8 +2,8 @@
 ARG BASE_IMAGE_TYPE=gpu
 # these images have been pushed to Dockerhub but you can find
 # each Dockerfile used in the `base_images` directory 
-FROM jetsonfederated_$BASE_IMAGE_TYPE:latest
-# FROM jafermarq/jetsonfederated_$BASE_IMAGE_TYPE:latest
+# FROM jetsonfederated_$BASE_IMAGE_TYPE:latest
+FROM jafermarq/jetsonfederated_$BASE_IMAGE_TYPE:latest
 # - except jetson orin
 
 RUN apt-get install wget -y
@@ -17,8 +17,14 @@ RUN apt-get install wget -y
 # RUN wget https://www.cs.toronto.edu/\~kriz/cifar-10-python.tar.gz 
 # RUN tar -zxvf cifar-10-python.tar.gz
 
+ENV DATA_DIR=/app/data
+
+
 WORKDIR /app
+
 # Scripts needed for Flower client
+
+ADD data /app
 ADD client.py /app
 ADD utils.py /app
 
@@ -31,7 +37,9 @@ RUN pip3 install --upgrade pip
 
 
 # making sure the latest version of flower is installed
-RUN pip3 install flwr==0.19.0
+RUN pip3 install flwr==0.18.0
 #RUN pip3 install flwr==0.19.0
+
+RUN pip3 install -U scikit-learn
 
 ENTRYPOINT ["python3","-u","./client.py"]

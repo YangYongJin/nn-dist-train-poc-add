@@ -2,7 +2,7 @@
 # We also install dependencies for a very exciting future project
 
 # check this repo to learn more about the image below: https://github.com/dusty-nv/jetson-containers
-FROM FROM nvcr.io/nvidia/l4t-pytorch:r34.1.0-pth1.12-py3
+FROM nvcr.io/nvidia/l4t-pytorch:r34.1.0-pth1.12-py3
 
 RUN mkdir /app
 WORKDIR /app
