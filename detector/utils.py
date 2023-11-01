@@ -101,7 +101,7 @@ def resize_annotations_and_image(target, image: Image.Image, target_size=(512, 5
             point['xbr'] = int(point['xbr'] * width_scale)
             point['ybr'] = int(point['ybr'] * height_scale)
 
-    return image
+    return target, image
 
 # Dummy CustomDataset to load data from your JSON format
 # You might need to further modify it to suit your directory structure and file naming
@@ -142,7 +142,7 @@ class SmartFarmDataset(torch.utils.data.Dataset):
         image = Image.open(image_path).convert("RGB")
 
         # Resize the image and adjust annotations in the target
-        image = resize_annotations_and_image(item, image)
+        item, image = resize_annotations_and_image(item, image)
         
         if self.transform:
             image = self.transform(image)
@@ -191,8 +191,8 @@ def load_smartfarm_data():
     transform = transforms.Compose(
         [
             transforms.ToTensor(),
-            transforms.Normalize((0.485, 0.456, 0.406),
-            (0.229, 0.224, 0.225)),
+            # transforms.Normalize((0.485, 0.456, 0.406),
+            # (0.229, 0.224, 0.225)),
         ]
     )
     dataset = SmartFarmDataset(farm_root, transform=transform)
