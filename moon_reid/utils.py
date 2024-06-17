@@ -296,14 +296,25 @@ def extract_feature(model, dataloaders):
     return features
 
 
-def get_optimizer(model, lr):
-        ignored_params = list(map(id, model.classifier.parameters()))
-        base_params = filter(lambda p: id(p) not in ignored_params, model.parameters())
-        optimizer_ft = optim.SGD([
+
+def get_optimizer1(model, lr):
+    ignored_params = list(map(id, model.classifier.parameters() ))
+    base_params = filter(lambda p: id(p) not in ignored_params, model.parameters())
+    optimizer_ft = optim.SGD([
+            {'params': base_params, 'lr': 0.1*lr},
+            {'params': model.classifier.parameters(), 'lr': lr}
+        ], weight_decay=5e-4, momentum=0.9, nesterov=True)
+    return optimizer_ft
+
+# for ntd, pav
+def get_optimizer2(model, lr):
+    ignored_params = list(map(id, model.classifier.parameters() ))
+    base_params = filter(lambda p: id(p) not in ignored_params, model.parameters())
+    optimizer_ft = optim.SGD([
             {'params': base_params, 'lr': lr},
             {'params': model.classifier.parameters(), 'lr': lr}
         ], weight_decay=5e-4, momentum=0.9, nesterov=True)
-        return optimizer_ft
+    return optimizer_ft
 
 def train(
     model: torch.nn.Module,
@@ -321,9 +332,9 @@ def train(
     #old_classifier = copy.deepcopy(model.classifier)
     #print(model)
     
-    optimizer = get_optimizer(model, lr=0.01)
+    #optimizer = get_optimizer(model, lr=0.01)
     #optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
-    scheduler = lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1)
+    #scheduler = lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1)
     
     criterion = nn.CrossEntropyLoss()
 
@@ -340,6 +351,12 @@ def train(
     print(f"Training {epochs} epoch(s) w/ {len(trainloader)} batches each")
     #t = time()
     for epoch in range(epochs):
+        if epoch % self.local_epoch == 0:
+            optimizer = get_optimizer1(self.model, lr)
+            scheduler = lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1)
+        else:
+            optimizer = get_optimizer2(self.model, lr)
+            scheduler = lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1)
         print('Epoch {}/{}'.format(epoch, epochs - 1))
         print('-' * 10)
 
