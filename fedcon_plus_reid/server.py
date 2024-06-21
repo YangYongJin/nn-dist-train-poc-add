@@ -115,10 +115,10 @@ parser.add_argument('--test_dir',default='all',type=str, help='./test_data')
 
 parser.add_argument("--pin_memory", action="store_true")
 args = parser.parse_args()
-""""""
+
 
 def main() -> None:
-    """ Start server and train five rounds."""
+    """Start server and train five rounds."""
 
     print(args)
 
@@ -156,7 +156,7 @@ def fit_config(server_round: int) -> Dict[str, fl.common.Scalar]:
     """Return a configuration with static batch size and (local) epochs."""
     config = {
         "epoch_global": str(server_round),
-        "epochs": str(1),
+        "epochs": str(3),
         "batch_size": str(args.batch_size),
         "num_workers": str(args.num_workers),
         "pin_memory": str(args.pin_memory),
@@ -188,7 +188,7 @@ def get_eval_fn(
         model.to(DEVICE)
 
         #testloader = torch.utils.data.DataLoader(testset, batch_size=32, shuffle=False)
-        utils.test(model, testloader, device=DEVICE)
+        utils.test(model, testloader,device=DEVICE)
         #return  {"cmc": accuracy}
 
     return evaluate
