@@ -100,7 +100,7 @@ The server will automatically download the dataset should it not be found in `./
 Launch the server and define the model you'd like to train. The current code (see `utils.py`) provides two models for CIFAR-10: a small CNN (more suitable for Raspberry Pi) and, a ResNet18, which will run well on the gpu. Each model can be specified using the `--model` flag with options `Net` or `ResNet18`. Launch a FL training setup with one client and doing three rounds as:
 ```bash
 # launch your server. It will be waiting until one client connects
-$ python server.py --server_address <YOUR_SERVER_IP:PORT> --rounds 30 --min_num_clients 4 --min_sample_size 4 --model ResNet18
+$ python3 server.py --server_address <YOUR_SERVER_IP:PORT> --rounds 30 --min_num_clients 4 --min_sample_size 4 --model ResNet18
 ```
 
 ## Clients
