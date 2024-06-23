@@ -110,8 +110,8 @@ Asuming you have cloned this repo onto the device/s, then execute the appropiate
 ### For Jetson
 
 ```bash
-$ ./run_jetson.sh --server_address=SERVER_ADDRESS:8080 --cid=0 --model=ResNet18
-$ python3 client.py --server_address=SERVER_ADDRESS:8080 --cid=0 --model=ResNet18
+$ ./run_jetson.sh --server_address=SERVER_ADDRESS:8080 --cid=0 --model=ResNet18 --batch_size 50
+$ python3 client.py --server_address=SERVER_ADDRESS:8080 --cid=0 --model=ResNet18 --batch_size 50
 ```
 
 ### For Raspberry Pi
