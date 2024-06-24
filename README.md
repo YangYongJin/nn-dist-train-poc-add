@@ -130,7 +130,7 @@ $ ./run_pi.sh --server_address=<SERVER_ADDRESS> --cid=0 --model=Net
 
 <img src="./fedntd.png" width="1200"/>
 
-### Baseline Algorithm for federated vehicle re-id (fedpav)
+### 1st year Algorithm for federated vehicle re-id (fedpav)
 
 Code for ACMMM 2020 oral paper - **[Performance Optimization for Federated Person Re-identification via Benchmark Analysis](https://arxiv.org/abs/2008.11560)**
 
@@ -139,6 +139,12 @@ Personal re-identification is an important computer vision task, but its develop
 Algorithm: Federated Partial Averaging (FedPav)
 
 <img src="./fedpav-new.png" width="700">
+
+### 2nd year Algorithm for federated vehicle re-id (feddkd)
+
+### 3rd year Algorithm for federated vehicle re-id (fedcon)
+
+### 4th year Algorithm for federated vehicle re-id (fedcon+)
 
 # Result of federated image classification (dataset:cifar 10) 
 
