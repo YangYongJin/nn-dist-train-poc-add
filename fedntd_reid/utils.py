@@ -116,7 +116,7 @@ class ft_net(nn.Module):
     def __init__(self, class_num, droprate=0.5, stride=2):
         super(ft_net, self).__init__()
        
-        model_ft = models.resnet18(pretrained=False)
+        model_ft = models.resnet50(pretrained=False)
         # model_ft=torch.load('saved_res50.pkl')
         # avg pooling to global pooling
         if stride == 1:
@@ -124,7 +124,7 @@ class ft_net(nn.Module):
             model_ft.layer4[0].conv2.stride = (1,1)
         model_ft.avgpool = nn.AdaptiveAvgPool2d((1,1))
         self.model = model_ft
-        self.classifier = ClassBlock(512, class_num, droprate)
+        self.classifier = ClassBlock(2048, class_num, droprate)
 
     def forward(self, x):
         x = self.model.conv1(x)
@@ -188,7 +188,7 @@ def ResNet18():
     return model
 
 def ResNet50():
-    model = ft_net(class_num=100)
+    model = ft_net(class_num=5)
     return model
 
 
@@ -223,7 +223,8 @@ def load_cifar(download=False) -> Tuple[datasets.CIFAR10, datasets.CIFAR10]:
 
 
 def refine_as_not_true(logits, targets, num_classes):
-    nt_positions = torch.arange(0, num_classes).to('cuda:0')
+    #print(torch.arange(0, num_classes).cuda())
+    nt_positions = torch.arange(0, 5).to('cuda:0')
     nt_positions = nt_positions.repeat(logits.size(0), 1)
     nt_positions = nt_positions[nt_positions[:, :] != targets.view(-1, 1)]
     nt_positions = nt_positions.view(-1, num_classes - 1)
@@ -245,6 +246,9 @@ class NTD_Loss(nn.Module):
 
     def forward(self, logits, targets, dg_logits):
         ce_loss = self.CE(logits, targets)
+        #if torch.isnan(ce_loss).any() or torch.isinf(ce_loss).any():
+            #print("ce_loss contains NaNs or Infs")
+        #print(ce_loss)
         ntd_loss = self._ntd_loss(logits, dg_logits, targets)
 
         loss = ce_loss + self.beta * ntd_loss
@@ -273,11 +277,17 @@ def fliplr(img):
     return img_flip
 
 def extract_feature(model, dataloaders):
+    criterion = nn.CrossEntropyLoss()
     features = torch.FloatTensor()
     for data in dataloaders:
         img, label = data
         n, c, h, w = img.size()
         ff = torch.FloatTensor(n, 5).zero_().cuda()
+        if torch.cuda.is_available():
+            inputs = Variable(img.cuda().detach())
+            labels = Variable(label.cuda().detach())
+        outputs = model(inputs)
+        loss = criterion(outputs, labels)
 
         for i in range(2):
             if(i==1):
@@ -294,7 +304,7 @@ def extract_feature(model, dataloaders):
         ff = ff.div(fnorm.expand_as(ff))
 
         features = torch.cat((features,ff.data.cpu()), 0)
-    return features
+    return features, loss
 
 
 def get_optimizer(model, lr):
@@ -327,7 +337,7 @@ def train(
     
     
         
-    #criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss()
     batch_size=10
     train_criterion = NTD_Loss(5, 3, 1)
     dg_model=copy.deepcopy(model)
@@ -346,8 +356,8 @@ def train(
         for data in trainloader:
             inputs, labels = data
             b, c, h, w = inputs.shape
-            if b < batch_size:
-                continue
+            #if b < batch_size:
+                #continue
             if torch.cuda.is_available():
                 inputs = Variable(inputs.cuda().detach())
                 labels = Variable(labels.cuda().detach())
@@ -360,7 +370,11 @@ def train(
             outputs, t_logits = model(inputs), dg_model(inputs)
             _, preds = torch.max(outputs.data, 1)
             #loss = criterion(outputs, labels)
+            #print(outputs.shape)
+            #print(labels.shape)
+            #print(t_logits.shape)
             loss = train_criterion(outputs,labels,t_logits)
+            #loss = criterion(outputs,labels)
             loss.backward()
 
             optimizer.step()
@@ -467,8 +481,8 @@ def test(
     #print('We use the scale: %s'%self.multiple_scale)
 
     with torch.no_grad():
-        gallery_feature = extract_feature(model, testloader['gallery'])
-        query_feature = extract_feature(model, testloader['query'])
+        gallery_feature, gallery_loss = extract_feature(model, testloader['gallery'])
+        query_feature, query_loss = extract_feature(model, testloader['query'])
 
     result = {'gallery_f': gallery_feature.numpy(),
               'gallery_label': gallery_meta['labels'],
@@ -503,10 +517,18 @@ def test(
 
     CMC = CMC.float()
     CMC = CMC/len(query_label) #average CMC
-    #print('Rank@286:%f mAP:%f'%(CMC[286], ap/len(query_label)))
-    print(' Rank@1:%f Rank@5:%f Rank@10:%f mAP:%f'%(CMC[1], CMC[5], CMC[10], ap/len(query_label)))
+    ap = ap/len(query_label)
+    acc = CMC[10]
+    #print(' Rank@1:%f Rank@5:%f Rank@10:%f mAP:%f'%(CMC[1], CMC[5], CMC[10], ap/len(query_label)))
+    print('Rank@10:%f mAP:%f'%(acc, ap))
     print('-'*15)
     print()
+    return CMC, ap, gallery_loss, acc
+    #print('Rank@286:%f mAP:%f'%(CMC[286], ap/len(query_label)))
+    
+    #print(' Rank@1:%f Rank@5:%f Rank@10:%f mAP:%f'%(CMC[1], CMC[5], CMC[10], ap/len(query_label)))
+    #print('-'*15)
+    #print()
 
     #print(self.model_name)
     #print(dataset):

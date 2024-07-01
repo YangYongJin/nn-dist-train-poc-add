@@ -10,13 +10,13 @@ RUN apt-get install wget -y
 # If the dataset is already in your system you can mount it instead.
 
 
-ENV DATA_DIR=/app/veri1
+ENV DATA_DIR=/app/veri3
 #RUN mkdir -p $DATA_DIR
 #WORKDIR $DATA_DIR
 
 WORKDIR /app
 # Scripts needed for Flower client
-ADD veri1 /app
+ADD veri3 /app
 ADD client.py /app
 ADD utils.py /app
 ADD data_utils.py /app

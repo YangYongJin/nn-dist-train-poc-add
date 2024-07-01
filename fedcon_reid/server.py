@@ -14,7 +14,7 @@
 # ==============================================================================
 """Minimal example on how to start a simple Flower server."""
 
-
+import wandb
 import argparse
 from collections import OrderedDict
 from typing import Callable, Dict, Optional, Tuple
@@ -77,7 +77,7 @@ parser.add_argument(
     "--model",
     type=str,
     default="ResNet18",
-    choices=["Net", "ResNet18","ResNet8"],
+    choices=["Net", "ResNet18","ResNet8","ResNet50"],
     help="model to train",
 )
 parser.add_argument(
@@ -119,7 +119,9 @@ args = parser.parse_args()
 
 def main() -> None:
     """Start server and train five rounds."""
-
+    wandb.init(project="nn-dist-train-poc", reinit=True)
+    wandb.run.name = 'fedcon'
+    wandb.run.save()
     print(args)
 
     assert (
@@ -139,7 +141,7 @@ def main() -> None:
         fraction_fit=args.sample_fraction,
         min_fit_clients=args.min_sample_size,
         min_available_clients=args.min_num_clients,
-        #eval_fn=get_eval_fn(data.testloader, data.gallery_feature, data.query_feature),
+        eval_fn=get_eval_fn(data.testloader, data.gallery_meta, data.query_meta),
         on_fit_config_fn=fit_config,
     )
     server = fl.server.Server(client_manager=client_manager, strategy=strategy)
@@ -156,7 +158,7 @@ def fit_config(server_round: int) -> Dict[str, fl.common.Scalar]:
     """Return a configuration with static batch size and (local) epochs."""
     config = {
         "epoch_global": str(server_round),
-        "epochs": str(1),
+        "epochs": str(3),
         "batch_size": str(args.batch_size),
         "num_workers": str(args.num_workers),
         "pin_memory": str(args.pin_memory),
@@ -176,7 +178,9 @@ def set_weights(model: torch.nn.ModuleList, weights: fl.common.Weights) -> None:
 
 
 def get_eval_fn(
-    testloader: torch.utils.data.DataLoader
+    testloader: torch.utils.data.DataLoader,
+    gallery_meta,
+    query_meta,
 ) -> Callable[[fl.common.Weights], Optional[Tuple[float, float]]]:
     """Return an evaluation function for centralized evaluation."""
 
@@ -188,7 +192,10 @@ def get_eval_fn(
         model.to(DEVICE)
 
         #testloader = torch.utils.data.DataLoader(testset, batch_size=32, shuffle=False)
-        utils.test(model, testloader device=DEVICE)
+        cmc, ap, loss, acc = utils.test(model, testloader, gallery_meta, query_meta, device=DEVICE)
+        wandb.log({"CMC": acc.item() if isinstance(acc, torch.Tensor) else acc,
+                   "Average Precision": ap.item() if isinstance(ap, torch.Tensor) else ap,
+                })
         #return  {"cmc": accuracy}
 
     return evaluate
