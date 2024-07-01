@@ -30,6 +30,7 @@ import utils
 
 # pylint: disable=no-member
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+#DEVICE = torch.device('cpu')
 # pylint: enable=no-member
 
 
@@ -115,7 +116,7 @@ class CifarClient(fl.client.Client):
         
         
         utils.train(self.model, self.data.trainloader, self.data.dataset_sizes, epochs=epochs, device=DEVICE)
-        utils.test(self.model, self.data.testloader, self.data.gallery_meta, self.data.query_meta,  device=DEVICE)
+        #utils.test(self.model, self.data.testloader, self.data.gallery_meta, self.data.query_meta,  device=DEVICE)
 
         # Return the refined weights and the number of examples used for training
         weights_prime: Weights = get_weights(self.model)
@@ -136,12 +137,14 @@ class CifarClient(fl.client.Client):
         set_weights(self.model, weights)
 
         # Evaluate the updated model on the local dataset
-        '''
-        testloader = torch.utils.data.DataLoader(
-            self.testset, batch_size=32, shuffle=False
-        )
-        '''
-        #utils.test(self.model, self.data.testloader, self.data.gallery_meta, self.data.query_meta, device=DEVICE)
+        
+        #testloader = torch.utils.data.DataLoader(
+            #self.testset, batch_size=10, shuffle=False
+        #)
+        num_examples_test = self.data.dataset_sizes
+        cmc, ap, loss, acc = utils.test(self.model, self.data.testloader, self.data.gallery_meta, self.data.query_meta, device=DEVICE)
+        loss_value = float(loss.cpu().detach().numpy())
+        metrics = {"rank10": float(cmc[10].cpu().detach().numpy())}
         '''
         print("="*10)
         print("Start Testing!")
@@ -166,17 +169,16 @@ class CifarClient(fl.client.Client):
         
             scipy.io.savemat(os.path.join('.','model',args.model,'pytorch_result.mat'),result)
             os.system('python evaluate.py --result_dir {} --dataset {}'.format(os.path.join('.', 'model', args.model), dataset))                
-            #print(self.model_name)
-            #print(dataset)
+            print(self.model_name)
+            print(dataset)
         
 
         # Return the number of evaluation examples and the evaluation result (loss)
         #metrics = {"accuracy": float(accuracy)}
-        
-        return EvaluateRes(
-            
-        )
         '''
+        return EvaluateRes(loss=loss_value, num_examples=num_examples_test, metrics=metrics
+        )
+        
 
 def main() -> None:
     """Load data, create and start CifarClient."""
@@ -204,7 +206,7 @@ def main() -> None:
         "--model",
         type=str,
         default="ResNet18",
-        choices=["Net", "ResNet18","ResNet8"],
+        choices=["Net", "ResNet18","ResNet8","ResNet50"],
         help="model to train",
     )
     parser.add_argument('--batch_size', type=int)

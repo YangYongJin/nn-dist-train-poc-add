@@ -116,7 +116,7 @@ class ft_net(nn.Module):
     def __init__(self, class_num, droprate=0.5, stride=2):
         super(ft_net, self).__init__()
        
-        model_ft = models.resnet18(pretrained=False)
+        model_ft = models.resnet50(pretrained=False)
         # model_ft=torch.load('saved_res50.pkl')
         # avg pooling to global pooling
         if stride == 1:
@@ -124,7 +124,7 @@ class ft_net(nn.Module):
             model_ft.layer4[0].conv2.stride = (1,1)
         model_ft.avgpool = nn.AdaptiveAvgPool2d((1,1))
         self.model = model_ft
-        self.classifier = ClassBlock(512, class_num, droprate)
+        self.classifier = ClassBlock(2048, class_num, droprate)
 
     def forward(self, x):
         x = self.model.conv1(x)
@@ -188,7 +188,7 @@ def ResNet18():
     return model
 
 def ResNet50():
-    model = ft_net(class_num=100)
+    model = ft_net(class_num=5)
     return model
 
 
@@ -273,12 +273,17 @@ def fliplr(img):
     return img_flip
 
 def extract_feature(model, dataloaders):
+    criterion = nn.CrossEntropyLoss()
     features = torch.FloatTensor()
     for data in dataloaders:
         img, label = data
         n, c, h, w = img.size()
         ff = torch.FloatTensor(n, 5).zero_().cuda()
-
+        if torch.cuda.is_available():
+            inputs = Variable(img.cuda().detach())
+            labels = Variable(label.cuda().detach())
+        outputs = model(inputs)
+        loss = criterion(outputs, labels)
         for i in range(2):
             if(i==1):
                 img = fliplr(img)
@@ -294,7 +299,7 @@ def extract_feature(model, dataloaders):
         ff = ff.div(fnorm.expand_as(ff))
 
         features = torch.cat((features,ff.data.cpu()), 0)
-    return features
+    return features, loss
 
 
 def get_optimizer(model, lr):
@@ -467,8 +472,8 @@ def test(
     #print('We use the scale: %s'%self.multiple_scale)
 
     with torch.no_grad():
-        gallery_feature = extract_feature(model, testloader['gallery'])
-        query_feature = extract_feature(model, testloader['query'])
+        gallery_feature, gallery_loss = extract_feature(model, testloader['gallery'])
+        query_feature, query_loss = extract_feature(model, testloader['query'])
 
     result = {'gallery_f': gallery_feature.numpy(),
               'gallery_label': gallery_meta['labels'],
@@ -503,11 +508,14 @@ def test(
 
     CMC = CMC.float()
     CMC = CMC/len(query_label) #average CMC
+    acc = CMC[10]
+    ap = ap/len(query_label)
     #print('Rank@286:%f mAP:%f'%(CMC[286], ap/len(query_label)))
-    print(' Rank@1:%f Rank@5:%f Rank@10:%f mAP:%f'%(CMC[1], CMC[5], CMC[10], ap/len(query_label)))
+    #print(' Rank@1:%f Rank@5:%f Rank@10:%f mAP:%f'%(CMC[1], CMC[5], CMC[10], ap/len(query_label)))
+    print('Rank@10:%f mAP:%f'%(acc, ap))
     print('-'*15)
     print()
-
+    return CMC, ap, gallery_loss, acc
     #print(self.model_name)
     #print(dataset):
 

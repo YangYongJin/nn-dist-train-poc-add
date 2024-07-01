@@ -62,7 +62,7 @@ class Data():
     def preprocess_one_train_dataset(self):
         """preprocess a training dataset, construct a data loader.
         """
-        data_path = '.'
+        data_path = './veri1'
         data_path = os.path.join(data_path, 'train' + self.train_all)
         image_dataset = datasets.ImageFolder(data_path)
         dataset_sizes = len(image_dataset)
@@ -71,7 +71,7 @@ class Data():
             ImageDataset(image_dataset.imgs, self.data_transforms['train']), 
             batch_size=self.batch_size,
             shuffle=True, 
-            num_workers=2, 
+            num_workers=0, 
             pin_memory=False)
 
         return loader, dataset_sizes
@@ -89,7 +89,7 @@ class Data():
         """preprocess testing data, constructing test loaders
         """
         #self.transform()
-        test_dir = '.'
+        test_dir = './veri1'
 
         #dataset = test_dir.split('/')[1]
         gallery_dataset = datasets.ImageFolder(os.path.join(test_dir, 'gallery'))
@@ -102,7 +102,7 @@ class Data():
                                                 dataset, 
                                                 batch_size=self.batch_size,
                                                 shuffle=False, 
-                                                num_workers=2, 
+                                                num_workers=0, 
                                                 pin_memory=True) for key, dataset in {'gallery': gallery_dataset, 'query': query_dataset}.items()}
 
         gallery_cameras, gallery_labels = get_camera_ids(gallery_dataset.imgs)
