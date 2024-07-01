@@ -100,7 +100,7 @@ The server will automatically download the dataset should it not be found in `./
 Launch the server and define the model you'd like to train. The current code (see `utils.py`) provides two models for CIFAR-10: a small CNN (more suitable for Raspberry Pi) and, a ResNet18, which will run well on the gpu. Each model can be specified using the `--model` flag with options `Net` or `ResNet18`. Launch a FL training setup with one client and doing three rounds as:
 ```bash
 # launch your server. It will be waiting until one client connects
-$ python server.py --server_address <YOUR_SERVER_IP:PORT> --rounds 3 --min_num_clients 1 --min_sample_size 1 --model ResNet18
+$ python3 server.py --server_address <YOUR_SERVER_IP:PORT> --rounds 30 --min_num_clients 4 --min_sample_size 4 --model ResNet18
 ```
 
 ## Clients
@@ -110,7 +110,8 @@ Asuming you have cloned this repo onto the device/s, then execute the appropiate
 ### For Jetson
 
 ```bash
-$ ./run_jetson.sh --server_address=SERVER_ADDRESS:8080 --cid=0 --model=ResNet18
+$ ./run_jetson.sh --server_address=SERVER_ADDRESS:8080 --cid=0 --model=ResNet18 --batch_size 50
+$ python3 client.py --server_address=SERVER_ADDRESS:8080 --cid=0 --model=ResNet18 --batch_size 50
 ```
 
 ### For Raspberry Pi
@@ -129,7 +130,7 @@ $ ./run_pi.sh --server_address=<SERVER_ADDRESS> --cid=0 --model=Net
 
 <img src="./fedntd.png" width="1200"/>
 
-### Baseline Algorithm for federated vehicle re-id (fedpav)
+### 1st year Algorithm for federated vehicle re-id (fedpav)
 
 Code for ACMMM 2020 oral paper - **[Performance Optimization for Federated Person Re-identification via Benchmark Analysis](https://arxiv.org/abs/2008.11560)**
 
@@ -138,6 +139,12 @@ Personal re-identification is an important computer vision task, but its develop
 Algorithm: Federated Partial Averaging (FedPav)
 
 <img src="./fedpav-new.png" width="700">
+
+### 2nd year Algorithm for federated vehicle re-id (feddkd)
+
+### 3rd year Algorithm for federated vehicle re-id (fedcon)
+
+### 4th year Algorithm for federated vehicle re-id (fedcon+)
 
 # Result of federated image classification (dataset:cifar 10) 
 
