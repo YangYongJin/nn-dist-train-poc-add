@@ -141,40 +141,44 @@ Algorithm: Federated Partial Averaging (FedPav)
 <img src="./fedpav-new.png" width="700">
 
 ### 2nd year Algorithm for federated vehicle re-id (feddkd) 
-**Input:** Total number of clients \( N \), total number of rounds \( R \)
 
-**Data:** \( n \in \{1, ..., N\} \): Data owned by the \( n \)-th client \( D_n \)
+We apply not true distilation proposed by [**"Preservation of Global Knowledge by Not-True Distillation in Federated Learning (NeurIPS 2022)"**](https://arxiv.org/abs/2106.03097) in fedpav algorithm 
 
-**Parameters:** 
-- \( K \): Number of clients selected each round
-- Initial global model: \( \theta^0 \)
+<img src="./fedntd.png" width="1200"/>
 
-**Client distribution model:** \( \{\mathcal{D}_i^G\}_{i=1}^N \leftarrow \{\mathcal{D}_i\}_{i=1}^N \)
+Detailed algorithm structure are as follows: 
 
----
+## Notation
+- **Total number of clients:** \( N \)
+- **Total number of rounds:** \( R \)
+- **Data held by each client \( n \in \{1, \ldots, N\} \):** \( D_n \)
+- **Number of clients selected in round \( r \):** \( K_r \)
+- **Initial global model parameter:** \( \theta^0 \)
 
-**For round \( t = 1, 2, ..., R \)**
+## Procedure
 
-### Main Model:
-1. Randomly sample \( K \) clients from \( N \) clients using the importance sampling distribution \( q_t \). \( S_t \leftarrow \{1, ..., N\} \)
-2. Distribute the current global model \( \theta^t \) to the selected clients \( S_t \)
-
-### k-th Client Model:
-1. Use the \( \mathcal{D}_n^{(t-1)} \) of the \( k \)-th client to construct a teacher model with classification ratio \( \alpha^{(t)} \)
-2. Initialize Student model \( \hat{\theta}_{k,t}^{stu} \)
-3. Using the knowledge distillation method, create teacher model \( \theta_{k,t}^{tea} \) and student model \( \hat{\theta}_{k,t}^{stu} \), and train using LSD distillation loss \( L_{LSD} \) and NTD distillation loss \( L_{NTD} \), with the goal being the minimization of the loss:
-
+1. **Initialization:**
    \[
-   \min_{\hat{\theta}_{k,t}^{stu}} L_{LSD}(\hat{\theta}_{k,t}^{stu}, \theta_{k,t}^{tea}) + L_{NTD}(\hat{\theta}_{k,t}^{stu}, \theta_{k,t}^{tea})
+   \theta^0 \quad \text{(initialize global model parameters)}
    \]
 
-4. Extract part \( \hat{\theta}_{k,t}^{stu\_part} \) from the trained student model \( \hat{\theta}_{k,t}^{stu} \), and send it to the server
+2. **For round \( r = 1, 2, \ldots, R \), do:**
 
-### Server Model:
-1. Receive the extracted parts \( \hat{\theta}_{k,t}^{stu\_part} \) from the \( k \)-th client \( S_t \)
-2. Update \( \theta^{t+1} \leftarrow \frac{\sum_{k \in S_t} |D_k| \hat{\theta}_{k,t}^{stu\_part}}{\sum_{k \in S_t} |D_k|} \)
+   - **Client selection:**
+     - Randomly sample \( K_r \) clients from \( N \) clients, denoted as \( S_r \subset \{1, \ldots, N\} \).
 
----
+   - **Local update:**
+     - Each selected client \( k \in S_r \):
+       - **Step 1:** Divide local data \( D_k \) into two parts with equal probability and construct teacher model \( c_{k}^{t,r} \) using one part.
+       - **Step 2:** Initialize student model \( \theta_{k}^{s,r,0} = \theta^{r-1} \).
+       - **Step 3:** Train the student model using knowledge distillation from the teacher model, achieving local student model \( \theta_{k}^{s,r} \).
+       - **Step 4:** Send the difference between the global model and the trained student model \( \Delta \theta_{k}^{r} = \theta_{k}^{s,r} - \theta^{r-1} \) to the server.
+
+   - **Aggregation:**
+     - The server updates the global model using the aggregation of local updates:
+       \[
+       \theta^{r} = \theta^{r-1} + \frac{\sum_{k \in S_r} |D_k| \Delta \theta_{k}^{r}}{\sum_{k \in S_r} |D_k|}
+       \]
 
 
 ### 3rd year Algorithm for federated vehicle re-id (fedcon)
