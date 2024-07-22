@@ -141,39 +141,41 @@ Algorithm: Federated Partial Averaging (FedPav)
 <img src="./fedpav-new.png" width="700">
 
 ### 2nd year Algorithm for federated vehicle re-id (feddkd) 
+**Input:** Total number of clients \( N \), total number of rounds \( R \)
 
-\begin{algorithm}
-\caption{Federated Learning Algorithm}
-\begin{algorithmic}[1]
-\STATE \textbf{Input:} Total number of clients $N$, total number of rounds $R$; 
-\STATE \textbf{Data:} $n \in \{1, ..., N\}$: Data owned by the $n$-th client: $D_n$; 
-\STATE \textbf{Parameters:} $K$: Number of clients selected each round; Initial global model: $\theta^0$;
-\STATE \textbf{Client distribution model:} $\{\mathcal{D}_i^G\}_{i=1}^N \leftarrow \{\mathcal{D}_i\}_{i=1}^N$;
+**Data:** \( n \in \{1, ..., N\} \): Data owned by the \( n \)-th client \( D_n \)
 
-\FOR {round $t=1,2,...,R$}
+**Parameters:** 
+- \( K \): Number of clients selected each round
+- Initial global model: \( \theta^0 \)
 
-    \STATE \textbf{Main Model:}
-    \STATE (step 1) Randomly sample $K$ clients from $N$ clients using the importance sampling distribution $q_t$. $S_t \leftarrow \{1, ..., N\}$;
-    \STATE (step 2) Distribute the current global model $\theta^t$ to the selected clients $S_t$.
+**Client distribution model:** \( \{\mathcal{D}_i^G\}_{i=1}^N \leftarrow \{\mathcal{D}_i\}_{i=1}^N \)
 
-    \FOR {each client $k$ in $S_t$}
+---
 
-        \STATE \textbf{k-th Client Model:}
-        \STATE (step 1) Use the $\mathcal{D}_n^{(t-1)}$ of the $k$-th client to construct a teacher model with classification ratio $\alpha^{(t)}$;
-        \STATE (step 2) Initialize Student model $\hat{\theta}_{k,t}^{stu}$;
-        \STATE (step 3) Using the knowledge distillation method, create teacher model $\theta_{k,t}^{tea}$, and student model $\hat{\theta}_{k,t}^{stu}$, and train using LSD distillation loss $L_{LSD}$ and NTD distillation loss $L_{NTD}$, with the goal being the minimization of the loss:
-        \[
-        \min_{\hat{\theta}_{k,t}^{stu}} L_{LSD}(\hat{\theta}_{k,t}^{stu}, \theta_{k,t}^{tea}) + L_{NTD}(\hat{\theta}_{k,t}^{stu}, \theta_{k,t}^{tea})
-        \]
-        \STATE (step 4) Extract part $\hat{\theta}_{k,t}^{stu\_part}$ from the trained student model $\hat{\theta}_{k,t}^{stu}$, and send it to the server.
+**For round \( t = 1, 2, ..., R \)**
 
-    \ENDFOR
+### Main Model:
+1. Randomly sample \( K \) clients from \( N \) clients using the importance sampling distribution \( q_t \). \( S_t \leftarrow \{1, ..., N\} \)
+2. Distribute the current global model \( \theta^t \) to the selected clients \( S_t \)
 
-    \STATE \textbf{Server Model:}
-    \STATE (step 1) Receive the extracted parts $\hat{\theta}_{k,t}^{stu\_part}$ from the $k$-th client $S_t$;
-    \STATE (step 2) Update $\theta^{t+1} \leftarrow \frac{\sum_{k \in S_t} |D_k| \hat{\theta}_{k,t}^{stu\_part}}{\sum_{k \in S_t} |D_k|}$.
+### k-th Client Model:
+1. Use the \( \mathcal{D}_n^{(t-1)} \) of the \( k \)-th client to construct a teacher model with classification ratio \( \alpha^{(t)} \)
+2. Initialize Student model \( \hat{\theta}_{k,t}^{stu} \)
+3. Using the knowledge distillation method, create teacher model \( \theta_{k,t}^{tea} \) and student model \( \hat{\theta}_{k,t}^{stu} \), and train using LSD distillation loss \( L_{LSD} \) and NTD distillation loss \( L_{NTD} \), with the goal being the minimization of the loss:
 
-\ENDFOR
+   \[
+   \min_{\hat{\theta}_{k,t}^{stu}} L_{LSD}(\hat{\theta}_{k,t}^{stu}, \theta_{k,t}^{tea}) + L_{NTD}(\hat{\theta}_{k,t}^{stu}, \theta_{k,t}^{tea})
+   \]
+
+4. Extract part \( \hat{\theta}_{k,t}^{stu\_part} \) from the trained student model \( \hat{\theta}_{k,t}^{stu} \), and send it to the server
+
+### Server Model:
+1. Receive the extracted parts \( \hat{\theta}_{k,t}^{stu\_part} \) from the \( k \)-th client \( S_t \)
+2. Update \( \theta^{t+1} \leftarrow \frac{\sum_{k \in S_t} |D_k| \hat{\theta}_{k,t}^{stu\_part}}{\sum_{k \in S_t} |D_k|} \)
+
+---
+
 
 ### 3rd year Algorithm for federated vehicle re-id (fedcon)
 
