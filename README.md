@@ -181,6 +181,8 @@ Detailed algorithm structure are as follows:
 We focus on aligning global feature and local clients feature by using contrastive loss as proposed by [**"Model-Contrastive Federated Learning (CVPR 2021)"**](https://arxiv.org/abs/2103.16257) 
 The structure of the algorithm remains consistent with previous ones. Algorithm are as follows: 
 
+<img src="./moon.png" width="600"/>
+
 ## Notation
 - **Feature extractor:** \( \theta(f) \)
 - **Model parameters:** \( \theta = (\theta(f), \theta(c)) \)
@@ -215,9 +217,9 @@ The structure of the algorithm remains consistent with previous ones. Algorithm 
 
 ### 4th year Algorithm for federated vehicle re-id (fedcon+)
 
-we propose fedcon+ which applies lp-ft (linear probing and fine tuning) on fedcon algorithm. The structure of the algorithm remains consistent with previous ones, and we will highlight the differences compared to the earlier algorithm.
+we propose fedcon+ which applies lp-ft (linear probing and fine tuning) on fedcon algorithm. The structure of the algorithm remains consistent with previous ones,  and below figure describes the differences compared to the earlier algorithm.
 
-
+<img src="./lp-ft.png" width="600"/>
 
 
 # Result of federated vehicle re-id (dataset: veri 776) - to be updated 
