@@ -125,11 +125,6 @@ $ ./run_pi.sh --server_address=<SERVER_ADDRESS> --cid=0 --model=Net
 
 ### Baseline(fedavg) and proposed Algorithm(fedntd) for federated image classification 
 
-
-[**"Preservation of Global Knowledge by Not-True Distillation in Federated Learning (NeurIPS 2022)"**](https://arxiv.org/abs/2106.03097).
-
-<img src="./fedntd.png" width="1200"/>
-
 ### 1st year Algorithm for federated vehicle re-id (fedpav)
 
 Code for ACMMM 2020 oral paper - **[Performance Optimization for Federated Person Re-identification via Benchmark Analysis](https://arxiv.org/abs/2008.11560)**
@@ -183,7 +178,46 @@ Detailed algorithm structure are as follows:
 
 ### 3rd year Algorithm for federated vehicle re-id (fedcon)
 
+We focus on aligning global feature and local clients feature by using contrastive loss as proposed by [**"Model-Contrastive Federated Learning (CVPR 2021)"**](https://arxiv.org/abs/2103.16257) 
+The structure of the algorithm remains consistent with previous ones. Algorithm are as follows: 
+
+## Notation
+- **Feature extractor:** \( \theta(f) \)
+- **Model parameters:** \( \theta = (\theta(f), \theta(c)) \)
+- **Global feature extractor:** \( \theta^{r-1}(f) \)
+- **Client's local model:** \( \theta_{i}^{r-1} = (\theta_{i}^{r-1}(f), \theta_{i}^{r-1}(c)) \)
+- **Loss function:** \( l_{r} = l_{CE} + l_{con} \)
+- **Hyperparameters:** \( \tau = 0.5 \), \( \mu = 5 \)
+
+## Procedure
+
+1. **Initialization:**
+   - **Central server:** Transmits the global feature extractor \( \theta^{r-1}(f) \) to \( K \) selected clients among \( N \) clients.
+
+2. **For each round \( r \):**
+   - **Client \( i \) Initialization:**
+     - Client \( i \) initializes its local model as \( \theta_{i} = (\theta^{r-1}(f), \theta_{i}^{r-1}(c)) \).
+
+   - **Local Model Training:**
+     - Client \( i \) uses the stochastic gradient descent (SGD) optimizer to train the model with the loss function \( l_{r} \), which is the sum of cross-entropy loss \( l_{CE} \) and contrastive loss \( l_{con} \).
+     - The loss function \( l_{r} \) has two hyperparameters \( (\tau, \mu) \) as specified in MOON[7].
+     - The cosine similarity between two vectors is denoted as \( \text{sim}(\cdot, \cdot) \).
+     - The feature representation at the penultimate layer (before the logit layer) is indicated as \( f(x; \theta(f)) \).
+
+   - **Model Update:**
+     - Client \( i \) optimizes the loss \( l_{r} \) to obtain the updated local model \( \theta_{i}^{r} \).
+     - Client \( i \) transmits only the updated feature extractor \( \theta_{i}^{r}(f) \) to the central server.
+
+   - **Aggregation:**
+     - The central server aggregates the feature extractors \( \theta_{i}^{r}(f) \) from the \( K \) selected clients.
+     - The global feature extractor \( \theta^{r}(f) \) is updated using a convex combination of the received feature extractors.
+
+
 ### 4th year Algorithm for federated vehicle re-id (fedcon+)
+
+we propose fedcon+ which applies lp-ft (linear probing and fine tuning) on fedcon algorithm. The structure of the algorithm remains consistent with previous ones, and we will highlight the differences compared to the earlier algorithm.
+
+
 
 
 # Result of federated vehicle re-id (dataset: veri 776) - to be updated 
