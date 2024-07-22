@@ -219,7 +219,7 @@ The structure of the algorithm remains consistent with previous ones. Algorithm 
 
 we propose fedcon+ which applies lp-ft (linear probing and fine tuning) on fedcon algorithm. The structure of the algorithm remains consistent with previous ones,  and below figure describes the differences compared to the earlier algorithm.
 
-<img src="./lp-ft.png" width="600"/>
+<img src="./lp-ft.jpg" width="600"/>
 
 
 # Result of federated vehicle re-id (dataset: veri 776) - to be updated 
