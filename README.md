@@ -144,7 +144,7 @@ Algorithm: Federated Partial Averaging (FedPav)
 
 We apply not true distilation proposed by [**"Preservation of Global Knowledge by Not-True Distillation in Federated Learning (NeurIPS 2022)"**](https://arxiv.org/abs/2106.03097) in fedpav algorithm 
 
-<img src="./fedntd.png" width="1200"/>
+<img src="./fedntd.png" width="600"/>
 
 Detailed algorithm structure are as follows: 
 
