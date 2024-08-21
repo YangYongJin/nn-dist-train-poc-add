@@ -119,7 +119,7 @@ args = parser.parse_args()
 
 def main() -> None:
     """Start server and train five rounds."""
-    wandb.init(project="nn-dist-train-poc", reinit=True)
+    wandb.init(project="veri776", reinit=True)
     wandb.run.name = 'feddkd'
     wandb.run.save()
     print(args)
@@ -141,6 +141,7 @@ def main() -> None:
         fraction_fit=args.sample_fraction,
         min_fit_clients=args.min_sample_size,
         min_available_clients=args.min_num_clients,
+        min_eval_clients=args.min_num_clients,
         eval_fn=get_eval_fn(data.testloader, data.gallery_meta, data.query_meta), #data.gallery_feature, data.query_feature),
         on_fit_config_fn=fit_config,
     )
