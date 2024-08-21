@@ -23,6 +23,8 @@ https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html
 
 # mypy: ignore-errors
 # pylint: disable=W0223
+import wandb
+import matplotlib.pyplot as plt
 from torch import optim
 import numpy as np
 from collections import OrderedDict
@@ -188,7 +190,7 @@ def ResNet18():
     return model
 
 def ResNet50():
-    model = ft_net(class_num=5)
+    model = ft_net(class_num=10)
     return model
 
 
@@ -272,13 +274,13 @@ def fliplr(img):
     img_flip = img.index_select(3,inv_idx)
     return img_flip
 
-def extract_feature(model, dataloaders):
+def extract_feature(model, dataloaders, num_class=10):
     criterion = nn.CrossEntropyLoss()
     features = torch.FloatTensor()
     for data in dataloaders:
         img, label = data
         n, c, h, w = img.size()
-        ff = torch.FloatTensor(n, 5).zero_().cuda()
+        ff = torch.FloatTensor(n, num_class).zero_().cuda()
         if torch.cuda.is_available():
             inputs = Variable(img.cuda().detach())
             labels = Variable(label.cuda().detach())
@@ -427,6 +429,32 @@ def evaluate(qf, ql, qc, gf, gl, gc):
     CMC_tmp = compute_mAP(index, good_index, junk_index)
     return CMC_tmp
 
+def evaluate_top_k(qf, ql, qc, gf, gl, gc, k):
+    query = qf.view(-1, 1)
+    score = torch.mm(gf, query)
+    score = score.squeeze(1).cpu()
+    score = score.numpy()
+    # predict index
+    index = np.argsort(score)  #from small to large
+    index = index[::-1]
+    # good index
+    gl= np.array(gl)
+    ql= np.dtype('int64').type(ql)
+    query_index = np.argwhere(gl==ql)
+    gc=np.array(gc)
+    qc=np.dtype('int64').type(qc)
+    camera_index = np.argwhere(gc==qc)
+    #good_index = index
+    good_index = np.setdiff1d(query_index, camera_index, assume_unique=True)
+
+    junk_index1 = np.argwhere(gl==-1)
+    junk_index2 = np.intersect1d(query_index, camera_index)
+    junk_index = np.append(junk_index2, junk_index1) #.flatten())
+    _, CMC_tmp = compute_mAP(index, good_index, junk_index)
+    
+    # save top k indicies
+    top_k_indices = CMC_tmp.argsort()[:k].tolist()
+    return top_k_indices
 
 def compute_mAP(index, good_index, junk_index):
     ap = 0
@@ -456,7 +484,13 @@ def compute_mAP(index, good_index, junk_index):
         ap = ap + d_recall*(old_precision + precision)/2
 
     return ap, cmc
-    
+
+def load_all_images(dataloader):
+    all_images = []
+    for images, _ in dataloader:
+        all_images.append(images)
+    all_images = torch.cat(all_images, dim=0)
+    return all_images    
 
 def test(
     model: torch.nn.Module,
@@ -499,6 +533,25 @@ def test(
     CMC = torch.IntTensor(len(gallery_label)).zero_()
     ap = 0.0
 
+    # set some hyperparam for wandb logging
+    fixed_idx = 0
+    k = 5 # set number of top k image
+    top_k_gallery_images = []
+    gallery_images = load_all_images(testloader['gallery'])
+    query_images = load_all_images(testloader['query'])
+    
+    query_image_np = query_images[fixed_idx].cpu().numpy().transpose((1, 2, 0))
+    query_image = wandb.Image(query_image_np, caption=f'Query: {query_label[fixed_idx]}')
+    top_k_indices = evaluate_top_k(query_feature[fixed_idx], query_label[fixed_idx], query_cam[fixed_idx], gallery_feature, gallery_label, gallery_cam, k)
+    
+    # Prepare top k gallery images for logging
+    for index in top_k_indices:
+        gallery_image_np = gallery_images[index].cpu().numpy().transpose((1, 2, 0))
+        top_k_gallery_images.append(wandb.Image(gallery_image_np, caption=f'Gallery: {gallery_label[index]}'))
+
+    # Log images to wandb
+    wandb.log({"Query Images": query_image, f"Top {k} Gallery Images": top_k_gallery_images})
+    
     for i in range(len(query_label)):
         ap_tmp, CMC_tmp = evaluate(query_feature[i], query_label[i], query_cam[i], gallery_feature, gallery_label, gallery_cam)
         if CMC_tmp[0]==-1:
