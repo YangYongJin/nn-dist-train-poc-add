@@ -647,6 +647,7 @@ def test(
     print('Rank@10:%f mAP:%f'%(acc, ap))
     print('-'*15)
     print()
+    wandb.log({"rank@10": acc, f"mAP": ap})
     return CMC, ap, gallery_loss, acc
     #print(self.model_name)
     #print(dataset):
