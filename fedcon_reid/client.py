@@ -237,7 +237,9 @@ def main() -> None:
 
 
     args = parser.parse_args()
-
+    wandb.init(project="veri776", reinit=True)
+    wandb.run.name = 'fedcon'
+    wandb.run.save()
     # Configure logger
     fl.common.logger.configure(f"client_{args.cid}", host=args.log_host)
     
