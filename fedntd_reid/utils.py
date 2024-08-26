@@ -226,7 +226,7 @@ def load_cifar(download=False) -> Tuple[datasets.CIFAR10, datasets.CIFAR10]:
 
 def refine_as_not_true(logits, targets, num_classes):
     #print(torch.arange(0, num_classes).cuda())
-    nt_positions = torch.arange(0, 5).to('cuda:0')
+    nt_positions = torch.arange(0, num_classes).to('cuda:0')
     nt_positions = nt_positions.repeat(logits.size(0), 1)
     nt_positions = nt_positions[nt_positions[:, :] != targets.view(-1, 1)]
     nt_positions = nt_positions.view(-1, num_classes - 1)
@@ -341,7 +341,8 @@ def train(
         
     criterion = nn.CrossEntropyLoss()
     batch_size=10
-    train_criterion = NTD_Loss(5, 3, 1)
+    num_class=10
+    train_criterion = NTD_Loss(num_class, 3, 1)
     dg_model=copy.deepcopy(model)
     #since = time.time()
     print( 'start training')

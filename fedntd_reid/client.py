@@ -14,7 +14,7 @@
 # ==============================================================================
 """Flower client example using PyTorch for CIFAR-10 image classification."""
 
-
+import wandb
 import argparse
 import timeit
 from collections import OrderedDict
@@ -234,7 +234,7 @@ def main() -> None:
 
     args = parser.parse_args()
     wandb.init(project="veri776", reinit=True)
-    wandb.run.name = 'fedntd'
+    wandb.run.name = 'feddkd'
     wandb.run.save()
     # Configure logger
     fl.common.logger.configure(f"client_{args.cid}", host=args.log_host)
