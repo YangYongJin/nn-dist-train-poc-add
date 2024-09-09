@@ -4,6 +4,10 @@ __pycache__/
 *$py.class
 .DS_Store
 
+*.jpg
+*.png
+*wandb*
+
 # C extensions
 *.so
 
