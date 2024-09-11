@@ -28,6 +28,7 @@ from flwr.common import EvaluateIns, EvaluateRes, FitIns, FitRes, ParametersRes,
 from data_utils import Data
 import utils
 import copy
+import wandb
 
 # pylint: disable=no-member
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
