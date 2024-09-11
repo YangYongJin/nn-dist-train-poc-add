@@ -62,7 +62,7 @@ class Data():
     def preprocess_one_train_dataset(self):
         """preprocess a training dataset, construct a data loader.
         """
-        data_path = './veri4'
+        data_path = '../person5'
         data_path = os.path.join(data_path, 'train' + self.train_all)
         image_dataset = datasets.ImageFolder(data_path)
         dataset_sizes = len(image_dataset)
@@ -89,7 +89,7 @@ class Data():
         """preprocess testing data, constructing test loaders
         """
         #self.transform()
-        test_dir = './veri4'
+        test_dir = '../person5'
 
         #dataset = test_dir.split('/')[1]
         gallery_dataset = datasets.ImageFolder(os.path.join(test_dir, 'gallery'))
@@ -140,6 +140,7 @@ def get_camera_ids(img_paths):
         info=filename.split('_')
         label=info[0]
         camera_id=info[1][1:]
-        labels.append(int(label))
+        # labels.append(int(label))
+        labels.append(label)
         camera_ids.append(int(camera_id))
     return camera_ids, labels
