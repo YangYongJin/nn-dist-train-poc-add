@@ -189,7 +189,7 @@ def ResNet18():
     return model
 
 def ResNet50():
-    model = ft_net(class_num=5)
+    model = ft_net(class_num=10)
     return model
 
 
@@ -273,13 +273,13 @@ def fliplr(img):
     img_flip = img.index_select(3,inv_idx)
     return img_flip
 
-def extract_feature(model, dataloaders):
+def extract_feature(model, dataloaders, num_class=10):
     criterion = nn.CrossEntropyLoss()
     features = torch.FloatTensor()
     for data in dataloaders:
         img, label = data
         n, c, h, w = img.size()
-        ff = torch.FloatTensor(n, 5).zero_().cuda()
+        ff = torch.FloatTensor(n, num_class).zero_().cuda()
         if torch.cuda.is_available():
             inputs = Variable(img.cuda().detach())
             labels = Variable(label.cuda().detach())
