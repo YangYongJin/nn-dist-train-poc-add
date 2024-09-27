@@ -66,15 +66,15 @@ def set_weights(model: torch.nn.ModuleList, weights: fl.common.Weights) -> None:
 
 
 class CifarClient(fl.client.Client):
-    """Flower client implementing CIFAR-10 image classification using
+    """Flower client implementing CIFAR-100 image classification using
     PyTorch."""
 
     def __init__(
         self,
         cid: str,
         model: torch.nn.Module,
-        trainset: torchvision.datasets.CIFAR10,
-        testset: torchvision.datasets.CIFAR10,
+        trainset: torchvision.datasets.CIFAR100,
+        testset: torchvision.datasets.CIFAR100,
         classes: list,
     ) -> None:
         self.cid = cid

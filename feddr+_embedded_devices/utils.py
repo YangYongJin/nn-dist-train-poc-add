@@ -212,9 +212,23 @@ class Net(nn.Module):
         # normalize feature
         x = x.view(x.size(0), -1)
     
-        normalized_feature= nn.functional.normalize(x, p=2, dim=1)
+        x= nn.functional.normalize(x, p=2, dim=1)
 
-        x = self.fc3(normalized_feature)
+        # x = self.fc3(x)
+        return x
+    
+    def extract_original_features(self, x: Tensor) -> Tensor:
+        """Compute forward pass."""
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = x.view(-1, 16 * 5 * 5)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+
+        # normalize feature
+        x = x.view(x.size(0), -1)
+    
+
         return x
 
     def get_weights(self) -> fl.common.Weights:
@@ -296,10 +310,10 @@ def train(
     epochs: int,
     optimizer_n: str,
     device: torch.device,  # pylint: disable=no-member
-) -> None:
+) -> None: 
     """Train the network."""
     # Define loss and optimizer
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.MSELoss()
     if optimizer_n == "SGD":
         optimizer = torch.optim.SGD(net.parameters(), lr=lr)
     elif optimizer_n == "Adam":
@@ -310,6 +324,14 @@ def train(
         optimizer = torch.optim.SGD(net.parameters(), lr=lr, momentum=0.9)
     else:
         raise NotImplementedError(f"optimizer {optimizer_n} is not implemented")
+    
+    teacher = copy.deepcopy(net)
+    teacher.eval()
+    teacher.to(device)
+    for param in teacher.parameters():
+        param.requires_grad = False
+
+    etf_label = net.state_dict()['fc3.weight']
 
     print(f"Training {epochs} epoch(s) w/ {len(trainloader)} batches each")
     t = time()
@@ -319,12 +341,19 @@ def train(
         for i, data in enumerate(trainloader, 0):
             images, labels = data[0].to(device), data[1].to(device)
 
+            etf_labels = etf_label[labels].to(device)
+
+            dg_original_features = teacher.extract_original_features(images)
+
             # zero the parameter gradients
             optimizer.zero_grad()
 
             # forward + backward + optimize
-            outputs = net(images)
-            loss = criterion(outputs, labels)
+            features = net(images)
+            original_features = net.extract_original_features(images)
+
+            inner_products = torch.sum(features * etf_labels, dim=1)
+            loss = torch.mean((0.9)*(1/2)*criterion(inner_products,torch.ones(len(labels)).to(device))+(0.1)*criterion(original_features, dg_original_features))
             loss.backward()
             optimizer.step()
 

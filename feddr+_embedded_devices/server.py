@@ -210,12 +210,12 @@ def set_weights(model: torch.nn.ModuleList, weights: fl.common.Weights) -> None:
 
 
 def get_eval_fn(
-    testset: torchvision.datasets.CIFAR10,
+    testset: torchvision.datasets.CIFAR100,
 ) -> Callable[[fl.common.Weights], Optional[Tuple[float, float]]]:
     """Return an evaluation function for centralized evaluation."""
 
     def evaluate(weights: fl.common.Weights) -> Optional[Tuple[float, float]]:
-        """Use the entire CIFAR-10 test set for evaluation."""
+        """Use the entire CIFAR-100 test set for evaluation."""
 
         model = utils.load_model(args.model)
         set_weights(model, weights)
