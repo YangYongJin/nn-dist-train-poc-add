@@ -365,7 +365,14 @@ def train(
     for param in teacher.parameters():
         param.requires_grad = False
 
-    etf_label = net.state_dict()['fc3.weight']
+    net.train()
+
+    if isinstance(net, ResNet18):
+        etf_label = net.state_dict()['fc.weight']
+    elif isinstance(net, ResNet8):
+        etf_label = net.state_dict()['fc.weight']
+    else:
+        etf_label = net.state_dict()['fc3.weight']
 
     print(f"Training {epochs} epoch(s) w/ {len(trainloader)} batches each")
     t = time()
