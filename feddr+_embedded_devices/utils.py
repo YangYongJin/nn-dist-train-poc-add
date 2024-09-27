@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""PyTorch CIFAR-10 image classification.
+"""PyTorch CIFAR-100 image classification.
 
 The code is generally adapted from 'PyTorch: A 60 Minute Blitz'. Further
 explanations are given in the official PyTorch tutorial:
 
-https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html
+https://pytorch.org/tutorials/beginner/blitz/cifar100_tutorial.html
 """
 
 
@@ -233,7 +233,7 @@ def ResNet8():
     return model
     
 class ResNet18(nn.Module):
-    """Returns a ResNet18 model from TorchVision adapted for CIFAR-10."""
+    """Returns a ResNet18 model from TorchVision adapted for CIFAR-100."""
     def __init__(self):
         super(ResNet18, self).__init__()
         self.feature_extractor = resnet18(num_classes=10)
@@ -242,7 +242,7 @@ class ResNet18(nn.Module):
         # replace w/ smaller input layer
         self.feature_extractor.conv1 = torch.nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
         nn.init.kaiming_normal_(self.feature_extractor.conv1.weight, mode="fan_out", nonlinearity="relu")
-        # no need for pooling if training for CIFAR-10
+        # no need for pooling if training for CIFAR-100
         self.feature_extractor.maxpool = torch.nn.Identity()
         self.feature_extractor.fc = torch.nn.Identity()
         self.fc = nn.Linear(512, 10)
@@ -272,19 +272,19 @@ def load_model(model_name: str) -> nn.Module:
 
 
 # pylint: disable=unused-argument
-def load_cifar(download=False) -> Tuple[datasets.CIFAR10, datasets.CIFAR10]:
-    """Load CIFAR-10 (training and test set)."""
+def load_cifar(download=False) -> Tuple[datasets.CIFAR100, datasets.CIFAR100]:
+    """Load CIFAR-100 (training and test set)."""
     transform = transforms.Compose(
         [
             transforms.ToTensor(),
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ]
     )
-    trainset = datasets.CIFAR10(
-        root=DATA_ROOT / "cifar-10", train=True, download=download, transform=transform
+    trainset = datasets.CIFAR100(
+        root=DATA_ROOT / "cifar-100", train=True, download=download, transform=transform
     )
-    testset = datasets.CIFAR10(
-        root=DATA_ROOT / "cifar-10", train=False, download=download, transform=transform
+    testset = datasets.CIFAR100(
+        root=DATA_ROOT / "cifar-100", train=False, download=download, transform=transform
     )
     return trainset, testset
 

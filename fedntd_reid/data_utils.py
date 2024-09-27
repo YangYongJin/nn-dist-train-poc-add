@@ -62,7 +62,7 @@ class Data():
     def preprocess_one_train_dataset(self):
         """preprocess a training dataset, construct a data loader.
         """
-        data_path = './veri4'
+        data_path = '../person1'
         data_path = os.path.join(data_path, 'train' + self.train_all)
         image_dataset = datasets.ImageFolder(data_path)
         dataset_sizes = len(image_dataset)
@@ -89,7 +89,7 @@ class Data():
         """preprocess testing data, constructing test loaders
         """
         #self.transform()
-        test_dir = './veri4'
+        test_dir = '../person1'
 
         #dataset = test_dir.split('/')[1]
         gallery_dataset = datasets.ImageFolder(os.path.join(test_dir, 'gallery'))
