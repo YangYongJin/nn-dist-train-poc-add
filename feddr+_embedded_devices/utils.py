@@ -276,7 +276,7 @@ class ResNet18(nn.Module):
         # no need for pooling if training for CIFAR-100
         self.feature_extractor.maxpool = torch.nn.Identity()
         self.feature_extractor.fc = torch.nn.Identity()
-        self.fc = nn.Linear(512, 10)
+        self.fc = nn.Linear(512, 100)
 
     def forward(self, x):
         x = self.feature_extractor(x)
@@ -287,6 +287,23 @@ class ResNet18(nn.Module):
 
         x = self.fc(normalized_feature)
 
+        return x
+    
+    def extract_features(self, x):
+        x = self.feature_extractor(x)
+        # normalize feature
+        x = x.view(x.size(0), -1)
+    
+        x= nn.functional.normalize(x, p=2, dim=1)#feature normalize!!
+
+
+        return x
+    
+    def extract_original_features(self, x):
+        x = self.feature_extractor(x)
+        # normalize feature
+        x = x.view(x.size(0), -1)
+    
         return x
 
 
@@ -308,7 +325,7 @@ def load_cifar(download=False) -> Tuple[datasets.CIFAR100, datasets.CIFAR100]:
     transform = transforms.Compose(
         [
             transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+            transforms.Normalize((0.5071, 0.4865, 0.4409), (0.2673, 0.2564, 0.2762)),
         ]
     )
     trainset = datasets.CIFAR100(
@@ -321,7 +338,7 @@ def load_cifar(download=False) -> Tuple[datasets.CIFAR100, datasets.CIFAR100]:
 
 
 def train(
-    net: Net,
+    net: nn.Module,
     trainloader: torch.utils.data.DataLoader,
     lr: float,
     epochs: int,
@@ -371,13 +388,15 @@ def train(
 
             inner_products = torch.sum(features * etf_labels, dim=1)
             loss = torch.mean((0.9)*(1/2)*criterion(inner_products,torch.ones(len(labels)).to(device))+(0.1)*criterion(original_features, dg_original_features))
+
+
             loss.backward()
             optimizer.step()
 
             # print statistics
             running_loss += loss.item()
-            if i % 50 == 49:  # print every 2000 mini-batches
-                print("[%d, %5d] loss: %.3f" % (epoch + 1, i + 1, running_loss / 50))
+            if i % 20 == 19:  # print every 2000 mini-batches
+                print("[%d, %5d] loss: %.3f" % (epoch + 1, i + 1, running_loss / 20))
                 running_loss = 0.0
 
     print(f"Epoch took: {time() - t:.2f} seconds")

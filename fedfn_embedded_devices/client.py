@@ -116,6 +116,8 @@ class CifarClient(fl.client.Client):
         config = ins.config
         fit_begin = timeit.default_timer()
 
+        
+
         # Get training config
         epochs = int(config["epochs"])
         lr = float(config["lr"])
