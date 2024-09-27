@@ -197,11 +197,28 @@ class Net(nn.Module):
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(6, 16, 5)
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+        self.fc2 = nn.Linear(120, 120)
+        self.fc3 = nn.Linear(120, 100)
 
     # pylint: disable=arguments-differ,invalid-name
     def forward(self, x: Tensor) -> Tensor:
+        """Compute forward pass."""
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = x.view(-1, 16 * 5 * 5)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+
+        # normalize feature
+        x = x.view(x.size(0), -1)
+    
+        x= nn.functional.normalize(x, p=2, dim=1)
+
+        x = self.fc3(x)
+        return x
+    
+    # pylint: disable=arguments-differ,invalid-name
+    def extract_features(self, x: Tensor) -> Tensor:
         """Compute forward pass."""
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
@@ -349,7 +366,7 @@ def train(
             optimizer.zero_grad()
 
             # forward + backward + optimize
-            features = net(images)
+            features = net.extract_features(images)
             original_features = net.extract_original_features(images)
 
             inner_products = torch.sum(features * etf_labels, dim=1)
