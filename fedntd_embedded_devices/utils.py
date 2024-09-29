@@ -193,14 +193,19 @@ def RESNET(**kwargs):
 class Net(nn.Module):
     """Simple CNN adapted from 'PyTorch: A 60 Minute Blitz'."""
 
-    def __init__(self) -> None:
+    def __init__(self, num_classes=10) -> None:
         super(Net, self).__init__()
         self.conv1 = nn.Conv2d(3, 6, 5)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+        if num_classes == 100:
+            self.fc1 = nn.Linear(16 * 5 * 5, 120)
+            self.fc2 = nn.Linear(120, 120)
+            self.fc3 = nn.Linear(120, 100)
+        elif num_classes == 10:
+            self.fc1 = nn.Linear(16 * 5 * 5, 120)
+            self.fc2 = nn.Linear(120, 84)
+            self.fc3 = nn.Linear(84, 10)
 
     # pylint: disable=arguments-differ,invalid-name
     def forward(self, x: Tensor) -> Tensor:
@@ -225,13 +230,13 @@ class Net(nn.Module):
         self.load_state_dict(state_dict, strict=True)
 
 def ResNet8(num_classes=10):
-    model= RESNET(depth=8, num_classes=10)
+    model= RESNET(depth=8, num_classes=num_classes)
     return model
     
-def ResNet18():
+def ResNet18(num_classes=10):
     """Returns a ResNet18 model from TorchVision adapted for CIFAR-10."""
 
-    model = resnet18(num_classes=10)
+    model = resnet18(num_classes=num_classes)
 
     # replace w/ smaller input layer
     model.conv1 = torch.nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
@@ -242,7 +247,7 @@ def ResNet18():
     return model
 
 
-def load_model(model_name: str, num_classes=10) -> nn.Module:
+def load_model(model_name: str, num_classes=100) -> nn.Module:
     if model_name == "Net":
         return Net(num_classes)
     elif model_name == "ResNet18":

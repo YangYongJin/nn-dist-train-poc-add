@@ -281,7 +281,7 @@ class ResNet18(nn.Module):
         # no need for pooling if training for CIFAR-100
         self.feature_extractor.maxpool = torch.nn.Identity()
         self.feature_extractor.fc = torch.nn.Identity()
-        self.fc = nn.Linear(512, num_classes=10)
+        self.fc = nn.Linear(512, num_classes)
 
     def forward(self, x):
         x = self.feature_extractor(x)
@@ -388,12 +388,11 @@ def train(
 
     net.train()
 
-    if isinstance(net, ResNet18):
-        etf_label = net.state_dict()['fc.weight']
-    elif isinstance(net, ResNet8):
-        etf_label = net.state_dict()['fc.weight']
-    else:
+    
+    if isinstance(net, Net):
         etf_label = net.state_dict()['fc3.weight']
+    else:
+        etf_label = net.state_dict()['fc.weight']
 
     print(f"Training {epochs} epoch(s) w/ {len(trainloader)} batches each")
     t = time()
