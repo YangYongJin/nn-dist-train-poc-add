@@ -232,7 +232,10 @@ def main() -> None:
     fl.common.logger.configure(f"client_{args.cid}", host=args.log_host)
 
     # model
-    model = utils.load_model(args.model)
+    if args.dataset == "cifar100":
+        model = utils.load_model(args.model, num_classes=100)
+    else:
+        model = utils.load_model(args.model, num_classes=10)
     model.to(DEVICE)
     # load (local, on-device) dataset
 

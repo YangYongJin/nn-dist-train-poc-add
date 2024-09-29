@@ -228,7 +228,10 @@ def get_eval_fn(
     def evaluate(weights: fl.common.Weights) -> Optional[Tuple[float, float]]:
         """Use the entire CIFAR-100 test set for evaluation."""
 
-        model = utils.load_model(args.model)
+        if args.dataset == "cifar100":
+            model = utils.load_model(args.model, num_classes=100)
+        else:
+            model = utils.load_model(args.model, num_classes=10)
         set_weights(model, weights)
         model.to(DEVICE)
 

@@ -224,7 +224,7 @@ class Net(nn.Module):
         )
         self.load_state_dict(state_dict, strict=True)
 
-def ResNet8():
+def ResNet8(num_classes=10):
     model= RESNET(depth=8, num_classes=10)
     return model
     
@@ -242,13 +242,13 @@ def ResNet18():
     return model
 
 
-def load_model(model_name: str) -> nn.Module:
+def load_model(model_name: str, num_classes=10) -> nn.Module:
     if model_name == "Net":
-        return Net()
+        return Net(num_classes)
     elif model_name == "ResNet18":
-        return ResNet18()
+        return ResNet18(num_classes)
     elif model_name == "ResNet8":
-        return ResNet8()
+        return ResNet8(num_classes)
     else:
         raise NotImplementedError(f"model {model_name} is not implemented")
 

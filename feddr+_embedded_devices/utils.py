@@ -191,14 +191,19 @@ def RESNET(**kwargs):
 class Net(nn.Module):
     """Simple CNN adapted from 'PyTorch: A 60 Minute Blitz'."""
 
-    def __init__(self) -> None:
+    def __init__(self, num_classes=10) -> None:
         super(Net, self).__init__()
         self.conv1 = nn.Conv2d(3, 6, 5)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 120)
-        self.fc3 = nn.Linear(120, 100)
+        if num_classes == 100:
+            self.fc1 = nn.Linear(16 * 5 * 5, 120)
+            self.fc2 = nn.Linear(120, 120)
+            self.fc3 = nn.Linear(120, 100)
+        elif num_classes == 10:
+            self.fc1 = nn.Linear(16 * 5 * 5, 120)
+            self.fc2 = nn.Linear(120, 84)
+            self.fc3 = nn.Linear(84, 10)
 
     # pylint: disable=arguments-differ,invalid-name
     def forward(self, x: Tensor) -> Tensor:
@@ -259,15 +264,15 @@ class Net(nn.Module):
         )
         self.load_state_dict(state_dict, strict=True)
 
-def ResNet8():
-    model= RESNET(depth=8, num_classes=10)
+def ResNet8(num_classes=10):
+    model= RESNET(depth=8, num_classes=num_classes)
     return model
     
 class ResNet18(nn.Module):
     """Returns a ResNet18 model from TorchVision adapted for CIFAR-100."""
-    def __init__(self):
+    def __init__(self,num_classes=10):
         super(ResNet18, self).__init__()
-        self.feature_extractor = resnet18(num_classes=10)
+        self.feature_extractor = resnet18(num_classes=num_classes)
 
 
         # replace w/ smaller input layer
@@ -276,7 +281,7 @@ class ResNet18(nn.Module):
         # no need for pooling if training for CIFAR-100
         self.feature_extractor.maxpool = torch.nn.Identity()
         self.feature_extractor.fc = torch.nn.Identity()
-        self.fc = nn.Linear(512, 100)
+        self.fc = nn.Linear(512, num_classes=10)
 
     def forward(self, x):
         x = self.feature_extractor(x)
@@ -294,7 +299,7 @@ class ResNet18(nn.Module):
         # normalize feature
         x = x.view(x.size(0), -1)
     
-        x= nn.functional.normalize(x, p=2, dim=1)#feature normalize!!
+        x= nn.functional.normalize(x, p=2, dim=1) #feature normalize!!
 
 
         return x
@@ -308,13 +313,13 @@ class ResNet18(nn.Module):
 
 
 
-def load_model(model_name: str) -> nn.Module:
+def load_model(model_name: str, num_classes=100) -> nn.Module:
     if model_name == "Net":
-        return Net()
+        return Net(num_classes)
     elif model_name == "ResNet18":
-        return ResNet18()
+        return ResNet18(num_classes)
     elif model_name == "ResNet8":
-        return ResNet8()
+        return ResNet8(num_classes)
     else:
         raise NotImplementedError(f"model {model_name} is not implemented")
 
