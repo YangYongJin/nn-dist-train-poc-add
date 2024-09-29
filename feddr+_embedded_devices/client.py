@@ -73,25 +73,33 @@ class CifarClient(fl.client.Client):
         self,
         cid: str,
         model: torch.nn.Module,
-        trainset: torchvision.datasets.CIFAR100,
-        testset: torchvision.datasets.CIFAR100,
+        trainset: torchvision.datasets,
+        testset: torchvision.datasets,
         classes: list,
+        dataset: str,
     ) -> None:
         self.cid = cid
         self.model = model
         self.trainset = trainset
         self.testset = testset
         self.classes = classes
+        self.dataset = dataset
+
+        # for the selected clases, if the dataset is cifar100,
+        # we set the each el of selected classes, denoted as c, to cover c to c + 9
+
+        if dataset == "cifar100":
+            self.classes = [c + i for c in self.classes for i in range(10)]
 
         # make random lists for selection of classes
         # select 80% for classes in self.classes and 20% for other classes
         self.id_idxs = []
         for i, (_, label) in enumerate(self.trainset):
             if label in self.classes:
-                if random.random() < 0.8:
+                if random.random() < 0.7:
                     self.id_idxs.append(i)
             else:
-                if random.random() < 0.2:
+                if random.random() < 0.3:
                     self.id_idxs.append(i)
 
 
@@ -202,6 +210,13 @@ def main() -> None:
         choices=["Net", "ResNet18","ResNet8"],
         help="model to train",
     )
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        required=True,
+        default="cifar100",
+        help=f"Dataset to use (default: cifar100)",
+)
     # arguments for self.classes (default: [0,1]) list
     parser.add_argument(
         "--classes",
@@ -220,10 +235,14 @@ def main() -> None:
     model = utils.load_model(args.model)
     model.to(DEVICE)
     # load (local, on-device) dataset
-    trainset, testset = utils.load_cifar()
+
+    if args.dataset == "cifar100":
+        trainset, testset = utils.load_cifar100(download=True)
+    else:
+        trainset, testset = utils.load_cifar10(download=True)
 
     # Start client
-    client = CifarClient(args.cid, model, trainset, testset, args.classes)
+    client = CifarClient(args.cid, model, trainset, testset, args.classes, args.dataset)
     fl.client.start_client(args.server_address, client)
 
 

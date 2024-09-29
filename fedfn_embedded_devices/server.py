@@ -53,6 +53,14 @@ parser.add_argument(
     required=True,
     help=f"gRPC server address",
 )
+
+parser.add_argument(
+    "--dataset",
+    type=str,
+    required=True,
+    default="cifar100",
+    help=f"Dataset to use (default: cifar100)",
+)
 parser.add_argument(
     "--rounds",
     type=int,
@@ -132,7 +140,7 @@ BEST_ACCURACY = 0.0
 
 def main() -> None:
     """init wandb"""
-    wandb.init(project="fedfn")
+    wandb.init(project="feddr+")
     wandb.config.update(args)
 
     """Start server and train five rounds."""
@@ -153,7 +161,10 @@ def main() -> None:
     fl.common.logger.configure(identifier=f"FedFN_{args.random_seed}", filename=os.path.join(args.log_host, f"seed_{args.random_seed}.log"))
 
     # Load evaluation data
-    _, testset = utils.load_cifar(download=True)
+    if args.dataset == "cifar100":
+        _, testset = utils.load_cifar100(download=True)
+    else:
+        _, testset = utils.load_cifar10(download=True)
 
     # Create client_manager, strategy, and server
     client_manager = fl.server.SimpleClientManager()
@@ -210,12 +221,12 @@ def set_weights(model: torch.nn.ModuleList, weights: fl.common.Weights) -> None:
 
 
 def get_eval_fn(
-    testset: torchvision.datasets.CIFAR10,
+    testset: torchvision.datasets,
 ) -> Callable[[fl.common.Weights], Optional[Tuple[float, float]]]:
     """Return an evaluation function for centralized evaluation."""
 
     def evaluate(weights: fl.common.Weights) -> Optional[Tuple[float, float]]:
-        """Use the entire CIFAR-10 test set for evaluation."""
+        """Use the entire CIFAR-100 test set for evaluation."""
 
         model = utils.load_model(args.model)
         set_weights(model, weights)

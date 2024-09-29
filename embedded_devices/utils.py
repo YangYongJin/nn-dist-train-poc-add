@@ -254,7 +254,23 @@ def load_model(model_name: str) -> nn.Module:
 
 
 # pylint: disable=unused-argument
-def load_cifar(download=False) -> Tuple[datasets.CIFAR10, datasets.CIFAR10]:
+def load_cifar100(download=False) -> Tuple[datasets.CIFAR100, datasets.CIFAR100]:
+    """Load CIFAR-100 (training and test set)."""
+    transform = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize((0.5071, 0.4865, 0.4409), (0.2673, 0.2564, 0.2762)),
+        ]
+    )
+    trainset = datasets.CIFAR100(
+        root=DATA_ROOT / "cifar-100", train=True, download=download, transform=transform
+    )
+    testset = datasets.CIFAR100(
+        root=DATA_ROOT / "cifar-100", train=False, download=download, transform=transform
+    )
+    return trainset, testset
+
+def load_cifar10(download=False) -> Tuple[datasets.CIFAR10, datasets.CIFAR10]:
     """Load CIFAR-10 (training and test set)."""
     transform = transforms.Compose(
         [
