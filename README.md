@@ -11,7 +11,8 @@ We implemented various FL algorithms across different tasks in our framework:
 - **FedDr+ (Ours)** ([Paper Link](https://openreview.net/pdf?id=FOi26eD2lQ), presented at **FedKDD 2024**).
 ### Re-Identification
 - **FedPAV** ([Paper Link](https://dl.acm.org/doi/pdf/10.1145/3531013), presented at **ACMMM 2020**),
-- **FedDKD (Ours)** ([Paper Link](https://www.kci.go.kr/kciportal/ci/sereArticleSearch/ciSereArtiView.kci?sereArticleSearchBean.artiId=ART003117176), presented at **KIISE 2022**),  
+- **FedDKD (Ours)** ([Paper Link](https://www.kci.go.kr/kciportal/ci/sereArticleSearch/ciSereArtiView.kci?sereArticleSearchBean.artiId=ART003117176), presented at **KIISE 2022**),
+- **FedCON (Ours)** ([Paper Link](https://www.kci.go.kr/kciportal/ci/sereArticleSearch/ciSereArtiView.kci?sereArticleSearchBean.artiId=ART003117176), presented at **KIISE 2024**).
 ### Object Detction
 
 # Directory explanation
