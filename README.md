@@ -6,7 +6,7 @@ This work was supported by Institute of Information & communications Technology 
 We implemented various FL algorithms across different tasks in our framework:
 ### Image Classification
 - **FedAVG** ([Paper Link](https://proceedings.mlr.press/v54/mcmahan17a/mcmahan17a.pdf), presented at **AISTATS 2017**),
-- 
+- **FedNTD (Ours)** ([Paper Link](https://openreview.net/pdf?id=qw3MZb1Juo), presented at **NeurIPS 2022**), 
 ### Re-Identification
 
 ### Object Detction
