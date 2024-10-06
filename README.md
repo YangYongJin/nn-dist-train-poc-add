@@ -15,7 +15,7 @@ We implemented various FL algorithms across different tasks in our framework:
 - **FedCON (Ours)** ([Paper Link](https://www.kci.go.kr/kciportal/ci/sereArticleSearch/ciSereArtiView.kci?sereArticleSearchBean.artiId=ART003117176), presented at **KIISE 2024**).
 - **FedCON+ (Ours)** (Proposed in 2024).
 ### Object Detction
-
+- **Contents** (Proposed in 2023).
 # Directory explanation
 
 1. Federated image classification: embedded_devices (fedavg), fedntd_embedded_devices (fedntd)
