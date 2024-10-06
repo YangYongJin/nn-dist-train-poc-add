@@ -8,8 +8,9 @@ We implemented various FL algorithms across different tasks in our framework:
 - **FedAVG** ([Paper Link](https://proceedings.mlr.press/v54/mcmahan17a/mcmahan17a.pdf), presented at **AISTATS 2017**),
 - **FedNTD (Ours)** ([Paper Link](https://openreview.net/pdf?id=qw3MZb1Juo), presented at **NeurIPS 2022**),
 - **FedFN (Ours)** ([Paper Link](https://openreview.net/pdf?id=4apX9Kcxie), presented at **NeurIPS Workshop 2023**).
+- **FedDr+ (Ours)** ([Paper Link](https://openreview.net/pdf?id=FOi26eD2lQ), presented at **FedKDD 2024**).
 ### Re-Identification
-
+- **FedPAV** ([Paper Link](https://dl.acm.org/doi/pdf/10.1145/3531013), presented at **ACMMM 2020**),
 ### Object Detction
 
 # Directory explanation
