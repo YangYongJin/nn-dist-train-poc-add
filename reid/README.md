@@ -59,9 +59,9 @@ You can download the datasets from [here](https://aihub.or.kr/aidata/7977).
 
 For preprocessing of “Korean re-identification image”, run the code below.
 
-'''bash
+```bash
 python3 preprocessing.py
-'''
+```
 
 You can change the type of dataset you want to use as an option.
   
