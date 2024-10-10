@@ -1,96 +1,68 @@
-# FedCV - Object Detection
+# FedPAV, FedNTD, FedCON, and FedCON+ - Re-ID
 
 ## Prerequisites & Installation
 
 ```bash
-pip install fedml --upgrade
+conda env create -n reid --file etri.yaml
 ```
 
-There are other dependencies in some tasks that need to be installed.
+You can simply download environment for run re-id code of various models.
+
+
+### Run Server and Client for Re-ID Experiment
+
+First, navigate to the folder of the model you want to run the experiment for:
 
 ```bash
-git clone https://github.com/FedML-AI/FedML
-cd FedML/python/app/fedcv/object_detection
-
-cd config/
-bash bootstrap.sh
-
-cd ..
+cd "model"
 ```
+Then, execute the server and client code simultaneously.
 
-### Run the MPI simulation
+* For Sever
 
 ```bash
-bash run_simulation.sh [CLIENT_NUM]
+python3 server.py --server_address 192.168.0.17:8080 --rounds 15 --min_num_clients "Number of client" --min_sample_size "Minimum number of participating clinets" --model ResNet50
 ```
 
-To customize the number of client, you can change the following variables in `config/simulation/fedml_config.yaml`:
+* For Client
 
 ```bash
-train_args:
-  federated_optimizer: "FedAvg"
-  client_id_list:
-  client_num_in_total: 2 # change here!
-  client_num_per_round: 1 # change here!
-  comm_round: 20
-  epochs: 5
-  batch_size: 1
+python3 client.py --server_address=137.68.194.166:8080 --cid=0 --model=ResNet50 --batch_size "batch size"
 ```
 
-### Run the server and client using MQTT
+To customize the number of clients, you can change --min_num_clients and --min_sample_size to the number of clients you wish to have.
 
-If you want to run the edge server and client using MQTT, you need to run the following commands.
+Ex. If you have 5 clients and want to participate 3 clients then, --min_num_clients = 5 and --min_sample_size = 3.
 
-> !!IMPORTANT!! In order to avoid crosstalk during use, it is strongly recommended to modify `run_id` in `run_server.sh` and `run_client.sh` to avoid conflict.
 
-```bash
-bash run_server.sh your_run_id
+### For Vehicle Re-ID tasks
 
-# in a new terminal window
+#### Datasets
 
-# run the client 1
-bash run_client.sh 1 your_run_id
+We conducted a Vehicle Re-ID task using the Veri-776 dataset.
 
-# run the client with client_id
-bash run_client.sh [CLIENT_ID] your_run_id
-```
+You can download the datasets from [here](https://vehiclereid.github.io/VeRi/).
 
-To customize the number of client, you can change the following variables in `config/fedml_config.yaml`:
+### For Person Re-ID tasks
 
-```bash
-train_args:
-  federated_optimizer: "FedAvg"
-  client_id_list:
-  client_num_in_total: 2 # change here!
-  client_num_per_round: 2 # change here!
-  comm_round: 20
-  epochs: 5
-  batch_size: 1
-```
+#### Datasets
 
-### Run the application using MLOps
+We conducted a Re-ID task using the "한국인 재식별 이미지" dataset provided by AI HUB.
 
-You just need to select the YOLOv5 Object Detection application and start a new run.
+You can download the datasets from [here](https://aihub.or.kr/aidata/7977).
 
-Run the following command to login to MLOps.
+#### Preprocessing
 
-```bash
-fedml login [ACCOUNT_ID]
-```
+For preprocessing of “Korean re-identification image”, run the code below.
 
-### Build your own application
+'''bash
+python3 preprocessing.py
+'''
 
-1. Build package
+You can change the type of dataset you want to use as an option.
 
-```bash
-pip install fedml --upgrade
-bash build_mlops_pkg.sh
-```
+### Acknowledgments
 
-2. Create an application and upload package in mlops folder to MLOps
+In this repo, FedPAV refers to [FedReID](https://github.com/cap-ntu/FedReID), while the remaining models were implemented directly. Thanks!
 
-## Change model
 
-The default model is YOLOv5. You can change the model by replacing the `config/fedml_config.yaml` file with `config/fedml_config_yolovx.yaml`.
-
-Or you can change the model by replacing the `model` and `yolo_cfg` in `config/fedml_config.yaml` with your own model and configuration.
