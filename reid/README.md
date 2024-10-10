@@ -1,4 +1,4 @@
-# FedPAV, FedNTD, FedCON, and FedCON+ - Re-ID
+# FedPAV, FedNTD, FedCON, and FedCON+ - For Re-ID Task
 
 ## Prerequisites & Installation
 
