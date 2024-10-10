@@ -1,6 +1,7 @@
 # FedPAV, FedNTD, FedCON, and FedCON+ - Re-ID
-
+--- 
 ## Prerequisites & Installation
+--- 
 
 ```bash
 conda env create -n reid --file etri.yaml
@@ -8,9 +9,8 @@ conda env create -n reid --file etri.yaml
 
 You can simply download environment for run re-id code of various models.
 
-
 ### Run Server and Client for Re-ID Experiment
-
+--- 
 First, navigate to the folder of the model you want to run the experiment for:
 
 ```bash
@@ -36,22 +36,27 @@ Ex. If you have 5 clients and want to participate 3 clients then, --min_num_clie
 
 
 ### For Vehicle Re-ID tasks
+--- 
 
 #### Datasets
+--- 
 
 We conducted a Vehicle Re-ID task using the Veri-776 dataset.
 
 You can download the datasets from [here](https://vehiclereid.github.io/VeRi/).
 
 ### For Person Re-ID tasks
+--- 
 
 #### Datasets
+--- 
 
 We conducted a Re-ID task using the "한국인 재식별 이미지" dataset provided by AI HUB.
 
 You can download the datasets from [here](https://aihub.or.kr/aidata/7977).
 
 #### Preprocessing
+--- 
 
 For preprocessing of “Korean re-identification image”, run the code below.
 
@@ -62,6 +67,7 @@ python3 preprocessing.py
 You can change the type of dataset you want to use as an option.
 
 ### Acknowledgments
+--- 
 
 In this repo, FedPAV refers to [FedReID](https://github.com/cap-ntu/FedReID), while the remaining models were implemented directly. Thanks!
 
